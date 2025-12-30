@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sportsmatchtracker.App
-import com.example.sportsmatchtracker.model.ConnectStatus
+import com.example.sportsmatchtracker.model.Client
 import com.example.sportsmatchtracker.repository.ClientRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,19 +18,14 @@ import kotlinx.coroutines.launch
 class HomeViewModel (
     private val clientRepository: ClientRepository
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(ConnectStatus())
-    val uiState: StateFlow<ConnectStatus> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(Client())
+    val uiState: StateFlow<Client> = _uiState.asStateFlow()
 
     init {
-        // Obserwuj zmiany statusu połączenia
+        // Observe client state changes
         viewModelScope.launch {
-            clientRepository.connected.collect { isConnected ->
-                _uiState.update { currentState ->
-                    currentState.copy(
-                        connected = isConnected,
-                        connectionStatus = if(isConnected) "Connected to server" else "Not connected"
-                    )
-                }
+            clientRepository.clientState.collect { clientState ->
+                _uiState.value = clientState
             }
         }
     }
@@ -39,6 +34,7 @@ class HomeViewModel (
         clientRepository.connectToServer()
     }
 
+    // Inject dependencies
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

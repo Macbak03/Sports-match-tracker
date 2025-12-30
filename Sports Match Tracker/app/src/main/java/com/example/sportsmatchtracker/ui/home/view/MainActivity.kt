@@ -70,6 +70,11 @@ fun Connect(
         Text(
             text = uiState.value.connectionStatus,
         )
+        if(uiState.value.connected) {
+            Text(
+                text = uiState.value.responseFromServer ?: "No response"
+            )
+        }
     }
 }
 
