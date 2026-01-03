@@ -1,17 +1,23 @@
-CC=gcc
-CFLAGS=-Wall -pthread
-OBJS=server.o cJSON.o
+CC = gcc
 
-server: $(OBJS)
-	$(CC) $(CFLAGS) -o server $(OBJS) -lm
+ORACLE_HOME ?= /c/Users/macie/Studia/SBD/Sports-match-tracker/oracle/instantclient_23_26
+OCI_INC = $(ORACLE_HOME)/sdk/include
+OCI_LIB = $(ORACLE_HOME)
 
-server.o: server.c cJSON.h
-	$(CC) $(CFLAGS) -c server.c
+CFLAGS = -Wall -pthread -I$(OCI_INC)
+LDFLAGS = -lpthread -lclntsh -L$(OCI_LIB)
 
-cJSON.o: cJSON.c cJSON.h
-	$(CC) $(CFLAGS) -c cJSON.c
+TARGET = server.out
+SRCS = server.c cJSON.c
+OBJS = $(SRCS:.c=.o)
+
+$(TARGET): $(OBJS)
+	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o server
+	rm -f $(OBJS) $(TARGET)
 
 .PHONY: clean

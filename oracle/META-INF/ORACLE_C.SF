@@ -1,0 +1,234 @@
+Signature-Version: 1.0
+Created-By: 11.0.25 (Oracle Corporation)
+SHA-256-Digest-Manifest: RWyb4cSWiaVDBPUkPKDXzqzjkCrpULB5jbLORS6++EQ=
+SHA-256-Digest-Manifest-Main-Attributes: rXGLzFRoiTCUr2HhBcoohKqa0SdlZ6G
+ pz173+fKLH2E=
+
+Name: instantclient_23_26/sdk/include/ocidef.h
+SHA-256-Digest: IgCScb/mGj1uWqpR192r8Pf4mSysQkxuh/w6vBH7p2I=
+
+Name: instantclient_23_26/sdk/demo/cdemo81.c
+SHA-256-Digest: YI8R6aKKWM0mMwvSB2ACJPvOETvm4l4GtRKm9lS65NU=
+
+Name: instantclient_23_26/sdk/include/xmlerr.h
+SHA-256-Digest: 4Ae6GPq4SREZlJ3d/nn/gpndfDWVazmg+/ngJBOHVwM=
+
+Name: instantclient_23_26/sdk/include/oci.h
+SHA-256-Digest: /coltZ298dMRf4ykbcWNYYaGlCGHnesdJk/zi4d6kZE=
+
+Name: instantclient_23_26/sdk/include/jznev.h
+SHA-256-Digest: qLYgekcTYmbjePxncw04DlgEWmE1NfppR7pH+zEfpOA=
+
+Name: instantclient_23_26/sdk/include/xml.h
+SHA-256-Digest: Lspkwij2XS11ahsaPpbrwyOeDyw71RE4hTbEFDWU/qk=
+
+Name: instantclient_23_26/sdk/include/occiObjects.h
+SHA-256-Digest: XOHp3G/nZUD9qG3YYf/LR5w9XGl3CQ/QYI2zeB3DFp8=
+
+Name: instantclient_23_26/sdk/include/orid.h
+SHA-256-Digest: OiT8Dr4klNFquMFDipvuai5L571ptxSD4xcSoA8neVU=
+
+Name: instantclient_23_26/sdk/include/oratypes.h
+SHA-256-Digest: oyfZ+8twJo0ao8aRKmw+YwMnvKM+JeN52fhdWPf7Rw4=
+
+Name: instantclient_23_26/sdk/include/ociextp.h
+SHA-256-Digest: yBRsT4zifucECY7yUgbhFeYcXbhKI5tT7Nj455Xd51o=
+
+Name: instantclient_23_26/sdk/include/orajson.h
+SHA-256-Digest: Xoe9WaXpBqttRULTbnqnduz/35bIhElsQuBABFxVFLY=
+
+Name: instantclient_23_26/sdk/include/jznerr.h
+SHA-256-Digest: bEyluM3Mo3Ai00Y9THT0OeypIwDUW62ohdgQ1dp6v6c=
+
+Name: instantclient_23_26/sdk/include/oraxml.h
+SHA-256-Digest: 2aZI9eZMxXz3olJH3fBTQ1iPSR4HHUHAVXDpTpreFDo=
+
+Name: instantclient_23_26/sdk/include/xmlotn.hpp
+SHA-256-Digest: fbMOl8gYydgTgsINyNHR3Bmte1T2YpbMCuIIF522b2U=
+
+Name: instantclient_23_26/sdk/include/oci8dp.h
+SHA-256-Digest: MRtC8ApRFBvjGVYh5+T8S5EGBJH/CIz7Z3rjjLyZd4A=
+
+Name: instantclient_23_26/sdk/include/oci1.h
+SHA-256-Digest: hsCFS2uWLBaz+rbfi/dRveMFAyR/rHe/MscmrCe7clY=
+
+Name: instantclient_23_26/sdk/include/ldap.h
+SHA-256-Digest: aG2JlnhS75/hpZ74ijLn+w5Nx+BGFWEhr6HW8XuF3dE=
+
+Name: instantclient_23_26/sdk/include/xa.h
+SHA-256-Digest: iLvKJMtCkE78IBtLu1TugX1TWmttTk64x3bStufuGmA=
+
+Name: instantclient_23_26/sdk/include/ocidfn.h
+SHA-256-Digest: x0Y6ZKknPDdVcNRT5doEuiypLWAC5IEoXig3x5Hwwsk=
+
+Name: instantclient_23_26/sdk/include/ocijson.h
+SHA-256-Digest: YCBfnzGMtHIGuvLzX1/uWx2zeynpwrApmMYBLQWUd/s=
+
+Name: instantclient_23_26/sdk/include/odci.h
+SHA-256-Digest: JegPAV0Z92Ici9FavFt9M7TRi6xwR31YGHOQOODZSfE=
+
+Name: instantclient_23_26/sdk/include/xmlsoap.h
+SHA-256-Digest: hrs/u4Py0DKtw3BnI2axnr7Fu5ZWvnP+rYSktixEOJ0=
+
+Name: instantclient_23_26/sdk/include/ort.h
+SHA-256-Digest: YGsbuBMln41d4f5zkEXlzMSgT0WXWmUWjrXbWr85wc8=
+
+Name: instantclient_23_26/sdk/include/nzt.h
+SHA-256-Digest: t/J3R+UjwkScYJCUffbgVLU1cI8EpbwooPiGbbJj3VM=
+
+Name: instantclient_23_26/sdk/include/jzntypes.h
+SHA-256-Digest: mqFjzOQ4NzpuianuI+64V4/iMcyktgVIef+SrFul6Ao=
+
+Name: instantclient_23_26/sdk/include/ociap.h
+SHA-256-Digest: MtfY1BUjgFr7GAuDqSX1ixo/IodLtkJwoRY4iE9R5+g=
+
+Name: instantclient_23_26/sdk/include/ociapr.h
+SHA-256-Digest: NCFbzFuKQtRc+/D3yUKHEHiTIHzBO8YKc7tci8vmQJE=
+
+Name: instantclient_23_26/sdk/include/orl.h
+SHA-256-Digest: mK5yPBaYQNHUfjvAfLv3lS38xsBd60JZ/2KZC5l2oAk=
+
+Name: instantclient_23_26/sdk/include/nzerror.h
+SHA-256-Digest: y5W7q/H1VGa5GSakW9+vJNEsZqC1tUH5lGWBceQkq4I=
+
+Name: instantclient_23_26/sdk/include/occi.h
+SHA-256-Digest: +57Xp7DOWlVbtz7I52rBzVzX/KKeHZaYkq11V2SeYs0=
+
+Name: instantclient_23_26/sdk/include/jzndom.h
+SHA-256-Digest: eDN0V1/TKLPizgA1vpkZYotvsxHxT7pyPHJiJIQcOy8=
+
+Name: instantclient_23_26/sdk/demo/oraaccess.xml
+SHA-256-Digest: 1vHiMaACZudpZ+p4KXEYJB+j/g/jQAKlkwxtGsRjukA=
+
+Name: instantclient_23_26/sdk/include/ocikpr.h
+SHA-256-Digest: 9oNoQLftB6Rd0LatnEMbr+xN2UQh0/QhPLSGOXjRRnA=
+
+Name: instantclient_23_26/sdk/demo/occidml.cpp
+SHA-256-Digest: GlZJVZPyoityqgPTtP46DaY8XhgRwVgJubQZY2kJduw=
+
+Name: instantclient_23_26/sdk/include/xmlxvm.h
+SHA-256-Digest: VvBC3ukhIvUZgeOmx5Un8Iq89MGLnNFY9DQsXeBFGgs=
+
+Name: instantclient_23_26/SDK_LICENSE
+SHA-256-Digest: qpGzFVK0uWZIfezTNnVQrL+i9FwMRBpgrQLFIlZDLoQ=
+
+Name: instantclient_23_26/sdk/include/xmlotn.h
+SHA-256-Digest: BDv3GlKvwV3G8S1f2cZh/HUqg5wFg54MbCMUtVVX/wM=
+
+Name: instantclient_23_26/sdk/include/xmlsoapc.hpp
+SHA-256-Digest: 6ksbvrmGe7A3H54i3uBYx/XGIJuudQ27JHTZnqYoisU=
+
+Name: instantclient_23_26/sdk/include/occiCommon.h
+SHA-256-Digest: U3DEVicXmdtv/ZIEHY/zbE8Uhk4qRuML78Sp8pq/svc=
+
+Name: instantclient_23_26/sdk/include/ocidem.h
+SHA-256-Digest: H3R6SGvDIyepohce0YNMWkHwExHA1rq72daICk3L9Hk=
+
+Name: instantclient_23_26/sdk/include/xmlsch.h
+SHA-256-Digest: G3Xma/Y1iRp3QTGOFCyd9e65K+EEVrFwiml5nlWkUT4=
+
+Name: instantclient_23_26/sdk/include/xmlev.h
+SHA-256-Digest: xkZpXLUFPdjKPS7fmJvGo90dq7VT2refnPySiqwc15I=
+
+Name: instantclient_23_26/sdk/include/xmlproc.h
+SHA-256-Digest: U/PuS/6xsN+iQFYcXlG86EhCNtt+jaotGbeutKTLedk=
+
+Name: instantclient_23_26/sdk/include/opmnlist.h
+SHA-256-Digest: lugKUZleQZWDdSIld2tKIhKXnbuRrMGfVyYWd1JyXXg=
+
+Name: instantclient_23_26/sdk/include/ocixstream.h
+SHA-256-Digest: et9vsLI61N5fbHHLttG8iJQj8Op8f9oEMn/mPqCdsmo=
+
+Name: instantclient_23_26/sdk/include/xmlctx.hpp
+SHA-256-Digest: Yxyd7gH+XB3xzswMxL2tlKm0hS+uxSS0iyjJUIvtTnw=
+
+Name: instantclient_23_26/sdk/include/xmldav.h
+SHA-256-Digest: 0G7JHkkmECyo7g2IwD065hfCXxRcrMR1+92enBvNpZM=
+
+Name: instantclient_23_26/sdk/ottclasses.zip
+SHA-256-Digest: 8LLaApYKkX2iRmW55TIaFWq8wC+jVAzluGERq/WSUcY=
+
+Name: instantclient_23_26/sdk/include/oraxsd.h
+SHA-256-Digest: abCNvCpXksg4S2YSvOGYmh5iCLz7tywflLyeGMQhY/0=
+
+Name: instantclient_23_26/sdk/include/xmlsoap.hpp
+SHA-256-Digest: zavCcmDaMNrAr5SrnhJjFsHHDKDJ0xU1RmaxbxDx4UI=
+
+Name: instantclient_23_26/sdk/include/occiData.h
+SHA-256-Digest: CPCsI55tiwBjCV9J4e9PG56AvayfWBBEowC5I3TobLg=
+
+Name: instantclient_23_26/sdk/include/xmldf.h
+SHA-256-Digest: 4fNQD7VBoG/ybDCLtEm2mYW4lgPjx8GNtqBUcipZO+o=
+
+Name: instantclient_23_26/sdk/include/occiAQ.h
+SHA-256-Digest: nquub12S7hYjMhSiJbUX96H2P9On2EkUjvlgVGVh9XI=
+
+Name: instantclient_23_26/sdk/include/xml.hpp
+SHA-256-Digest: 0LvRfYsXcglUXAeebhPwzr38pfQVuUX9emhUtvykx6k=
+
+Name: instantclient_23_26/sdk/demo/occidemod.sql
+SHA-256-Digest: d2FpXjytQOe26WFsG8UDsgVqPudsTPe6sPvHYK2rgyo=
+
+Name: instantclient_23_26/sdk/demo/demo.mk
+SHA-256-Digest: WnRUHZVSUs/rZeaM/cE+evzNDcpdcVYytQrlhbfN9ts=
+
+Name: instantclient_23_26/sdk/demo/occidemo.sql
+SHA-256-Digest: KF01BL4b9RD2VGyteZaLYUGXaMckcKkwJZAwKT94hOU=
+
+Name: instantclient_23_26/sdk/include/ocixmldb.h
+SHA-256-Digest: GnSQ8ImL8A0rqVl+b7f27BfPAsBe52dZTf3C+ZJD08w=
+
+Name: instantclient_23_26/sdk/include/ociver.h
+SHA-256-Digest: SYVqaitfHk3LyWJ8I3ERySOhHIUQAIK/I7RrAEwNl3o=
+
+Name: instantclient_23_26/sdk/include/occiControl.h
+SHA-256-Digest: wgvfqNWss0vIlNmg7rYaYFVJeNV6BSWwFFHvv7D8aZs=
+
+Name: instantclient_23_26/sdk/include/ons.h
+SHA-256-Digest: hCOvRzvtZwMurm1XWC6iVYBaeV8Qr2E5WAR3hQ9EGhg=
+
+Name: instantclient_23_26/sdk/demo/occiobj.typ
+SHA-256-Digest: 7yLkb2aGKA8QXTtv0MHo0O4IB0w9CAj1gDGpfVsZDJw=
+
+Name: instantclient_23_26/sdk/ott
+SHA-256-Digest: a8RFhlY9nWl40q2gAX+1HUYaIYYW4sP9lX3YArKtrE8=
+
+Name: instantclient_23_26/sdk/include/orastruc.h
+SHA-256-Digest: z+ZkR4FwSk1kbjKylc9za2FUxhdFO9fwKsdHPaJWSls=
+
+Name: instantclient_23_26/sdk/include/xmlurl.h
+SHA-256-Digest: CRDHMEMi5gHYvIasjU0NiCHU9LuF07XWw19iQbsYL38=
+
+Name: instantclient_23_26/sdk/demo/occiobj.cpp
+SHA-256-Digest: 3pa9PhMK+71iNi3tyQgn1nCrp+ZD1sfOQNBMi6kk2IY=
+
+Name: instantclient_23_26/sdk/include/oro.h
+SHA-256-Digest: hjLlccdbZsQGmnh4qnlokeZ0L5Bb/LbY0VCKHvCXhPc=
+
+Name: instantclient_23_26/sdk/admin/oraaccess.xsd
+SHA-256-Digest: v9iy2883U5MIDQmRovp6bSPO3Q+2hseJteIdNqGmEP8=
+
+Name: instantclient_23_26/sdk/include/ori.h
+SHA-256-Digest: NsNbNU6CRDfUKYIgUrujQVqs5kYkIqVB0skoDY0JhVQ=
+
+Name: instantclient_23_26/SDK_README
+SHA-256-Digest: E0a8l2fmeZ4hMCbHd+gPnT+QdFF75fVi1OMU1i/UE00=
+
+Name: instantclient_23_26/sdk/include/xmlxptr.h
+SHA-256-Digest: cSnLbcXffZxUBLowbyx1AqlR2s9jLLke6cmuK7fv630=
+
+Name: instantclient_23_26/sdk/include/jznotn.h
+SHA-256-Digest: imvfw20rRzPXzR0wOT0t6qwMc2rA69FrZv6V7vQ5SiM=
+
+Name: instantclient_23_26/sdk/include/oraxmlcg.h
+SHA-256-Digest: UKtcN3Oc5HVBejCFCySQbJQGxfW6Mlz/49yeLfpvMps=
+
+Name: instantclient_23_26/sdk/include/oraxsd.hpp
+SHA-256-Digest: 2ivbCxdwRPu6BnctfA7yjHCqAgnT4iF6iuCSebWoff8=
+
+Name: instantclient_23_26/sdk/include/xmlxsl.h
+SHA-256-Digest: 8uNmM/W8W9V+C5wUA4A33oOYTG1bMJUqtx/OsWuwAE0=
+
+Name: instantclient_23_26/sdk/include/oraxml.hpp
+SHA-256-Digest: ae6AzDPcn7qIOY21I2wROC2bICT66u5FYdbD4OPaOI8=
+

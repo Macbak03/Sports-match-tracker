@@ -8,8 +8,19 @@
 #include <unistd.h> // for close
 #include <pthread.h>
 #include <time.h>
+#include <signal.h>
 #include "cJSON.h"
+#include <oci.h>
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+volatile sig_atomic_t keep_running = 1;
+int serverSocket = -1;
+
+OCIEnv *env;
+OCIError *err;
+OCISvcCtx *svc;
+OCIStmt *stmt = NULL;
+OCIDefine *def = NULL;
 
 // Parse JSON recived from client and send a response
 void process_sql_request(char *json_message, char *response)
@@ -87,6 +98,57 @@ void process_sql_request(char *json_message, char *response)
   cJSON_Delete(json);
 }
 
+void handle_sigint(int sig)
+{
+  printf("\nReceived signal %d, shutting down...\n", sig);
+  keep_running = 0;
+  if (serverSocket != -1)
+  {
+    shutdown(serverSocket, SHUT_RDWR);
+    close(serverSocket);
+  }
+}
+
+int initOCI()
+{
+  sword rc;
+
+  rc = OCIEnvCreate(&env, OCI_DEFAULT, NULL, NULL, NULL, NULL, 0, NULL);
+  if (rc != OCI_SUCCESS)
+  {
+    printf("OCIEnvCreate failed\n");
+    return 1;
+  }
+  OCIHandleAlloc(env, (void **)&err, OCI_HTYPE_ERROR, 0, NULL);
+  return 0;
+}
+
+int connectToOracle()
+{
+  sword rc;
+
+  const char *db_user = "server";
+  const char *db_pass = "ServerPassword";
+  const char *db_conn = "//172.18.16.1:1521/orcl1.db.com";
+  rc = OCILogon(
+      env, err, &svc,
+      (OraText *)db_user, strlen(db_user),
+      (OraText *)db_pass, strlen(db_pass),
+      (OraText *)db_conn, strlen(db_conn));
+
+  if (rc != OCI_SUCCESS)
+  {
+    text errbuf[512];
+    sb4 errcode;
+    OCIErrorGet(err, 1, NULL, &errcode, errbuf, sizeof(errbuf), OCI_HTYPE_ERROR);
+    printf("Login failed: %s\n", errbuf);
+    return 1;
+  }
+
+  printf("Connected to Oracle OK\n");
+  return 0;
+}
+
 void *socketThread(void *arg)
 {
   int newSocket = *((int *)arg);
@@ -117,7 +179,7 @@ void *socketThread(void *arg)
 
 int main()
 {
-  int serverSocket, newSocket;
+  int newSocket;
   struct sockaddr_in serverAddr;
   struct sockaddr_storage serverStorage;
   socklen_t addr_size;
@@ -141,6 +203,20 @@ int main()
   // Bind the address struct to the socket
   bind(serverSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
 
+  // Setup signal handler for Ctrl+C
+  signal(SIGINT, handle_sigint);
+
+  int oci = initOCI();
+  if (oci == 1)
+  {
+    return 1;
+  }
+  int connection = connectToOracle();
+  if (connection == 1)
+  {
+    return 1;
+  }
+
   // Listen on the socket
   if (listen(serverSocket, 50) == 0)
     printf("Listening\n");
@@ -149,11 +225,14 @@ int main()
 
   pthread_t thread_id;
 
-  while (1)
+  while (keep_running)
   {
     // Accept call creates a new socket for the incoming connection
     addr_size = sizeof serverStorage;
     newSocket = accept(serverSocket, (struct sockaddr *)&serverStorage, &addr_size);
+
+    if (!keep_running || newSocket < 0)
+      break;
 
     if (pthread_create(&thread_id, NULL, socketThread, &newSocket) != 0)
       printf("Failed to create thread\n");
@@ -161,5 +240,15 @@ int main()
     pthread_detach(thread_id);
     // pthread_join(thread_id,NULL);
   }
+
+  // Cleanup
+  printf("Closing server socket and disconnecting from Oracle...\n");
+  if (serverSocket != -1)
+    close(serverSocket);
+  OCILogoff(svc, err);
+  OCIHandleFree(err, OCI_HTYPE_ERROR);
+  OCIHandleFree(env, OCI_HTYPE_ENV);
+  printf("Server stopped.\n");
+
   return 0;
 }
