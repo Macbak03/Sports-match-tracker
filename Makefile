@@ -1,6 +1,6 @@
 CC = gcc
 
-ORACLE_HOME ?= /c/Users/macie/Studia/SBD/Sports-match-tracker/oracle/instantclient_23_26
+ORACLE_HOME ?= ./oracle/instantclient_23_26
 OCI_INC = $(ORACLE_HOME)/sdk/include
 OCI_LIB = $(ORACLE_HOME)
 
