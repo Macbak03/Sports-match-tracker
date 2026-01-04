@@ -22,7 +22,7 @@ class ClientRepository {
         scope.launch {
             var socket: Socket? = null
             try {
-                socket = Socket("172.18.24.78", 1100)
+                socket = Socket("172.30.0.236", 1100)
                 val output = PrintWriter(
                     BufferedWriter(OutputStreamWriter(socket.getOutputStream())),
                     true
