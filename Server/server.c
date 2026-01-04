@@ -10,22 +10,24 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
-#include <postgresql/libpq-fe.h>
+#include <sqlite3.h>
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 volatile sig_atomic_t keep_running = 1;
 int serverSocket = -1;
 
-/* PostgreSQL connection */
-PGconn *conn = NULL;
+/* SQLite connection */
+sqlite3 *db = NULL;
 
 /* ===================== SELECT DYNAMIC ===================== */
-int executeDynamicSelect(cJSON *json, char *response) {
+int executeDynamicSelect(cJSON *json, char *response)
+{
     char sql[2048];
 
     cJSON *table = cJSON_GetObjectItem(json, "table");
-    if (!cJSON_IsString(table)) {
+    if (!cJSON_IsString(table))
+    {
         sprintf(response, "{\"status\":\"error\",\"message\":\"Missing table name\"}");
         return 1;
     }
@@ -33,14 +35,18 @@ int executeDynamicSelect(cJSON *json, char *response) {
     /* Columns */
     char columns_str[512] = "*";
     cJSON *columns = cJSON_GetObjectItem(json, "columns");
-    if (cJSON_IsArray(columns)) {
+    if (cJSON_IsArray(columns))
+    {
         columns_str[0] = '\0';
         int size = cJSON_GetArraySize(columns);
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++)
+        {
             cJSON *col = cJSON_GetArrayItem(columns, i);
-            if (cJSON_IsString(col)) {
+            if (cJSON_IsString(col))
+            {
                 strcat(columns_str, col->valuestring);
-                if (i < size - 1) strcat(columns_str, ", ");
+                if (i < size - 1)
+                    strcat(columns_str, ", ");
             }
         }
     }
@@ -48,12 +54,14 @@ int executeDynamicSelect(cJSON *json, char *response) {
     /* WHERE */
     char where_str[512] = "";
     cJSON *where = cJSON_GetObjectItem(json, "where");
-    if (cJSON_IsObject(where)) {
+    if (cJSON_IsObject(where))
+    {
         cJSON *column = cJSON_GetObjectItem(where, "column");
         cJSON *op = cJSON_GetObjectItem(where, "operator");
         cJSON *value = cJSON_GetObjectItem(where, "value");
 
-        if (cJSON_IsString(column) && cJSON_IsString(op) && cJSON_IsString(value)) {
+        if (cJSON_IsString(column) && cJSON_IsString(op) && cJSON_IsString(value))
+        {
             sprintf(where_str, " WHERE %s %s '%s'",
                     column->valuestring,
                     op->valuestring,
@@ -64,28 +72,36 @@ int executeDynamicSelect(cJSON *json, char *response) {
     sprintf(sql, "SELECT %s FROM %s%s", columns_str, table->valuestring, where_str);
     printf("Executing SQL: %s\n", sql);
 
-    PGresult *res = PQexec(conn, sql);
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
 
-    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+    if (rc != SQLITE_OK)
+    {
         sprintf(response,
                 "{\"status\":\"error\",\"message\":\"Query failed: %s\"}",
-                PQerrorMessage(conn));
-        PQclear(res);
+                sqlite3_errmsg(db));
         return 1;
     }
-
-    int rows = PQntuples(res);
 
     cJSON *json_response = cJSON_CreateObject();
     cJSON_AddStringToObject(json_response, "status", "success");
     cJSON *data = cJSON_CreateArray();
 
-    for (int i = 0; i < rows; i++) {
+    int rows = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
         cJSON *row = cJSON_CreateObject();
-        cJSON_AddStringToObject(row, "email", PQgetvalue(res, i, 0));
-        cJSON_AddStringToObject(row, "nick", PQgetvalue(res, i, 1));
-        cJSON_AddStringToObject(row, "haslo", PQgetvalue(res, i, 2));
+        int cols = sqlite3_column_count(stmt);
+
+        for (int i = 0; i < cols; i++)
+        {
+            const char *col_name = sqlite3_column_name(stmt, i);
+            const char *col_value = (const char *)sqlite3_column_text(stmt, i);
+            cJSON_AddStringToObject(row, col_name, col_value ? col_value : "");
+        }
+
         cJSON_AddItemToArray(data, row);
+        rows++;
     }
 
     cJSON_AddItemToObject(json_response, "data", data);
@@ -96,29 +112,35 @@ int executeDynamicSelect(cJSON *json, char *response) {
 
     free(out);
     cJSON_Delete(json_response);
-    PQclear(res);
+    sqlite3_finalize(stmt);
 
     return 0;
 }
 
 /* ===================== JSON ROUTER ===================== */
-void process_sql_request(char *json_message, char *response) {
+void process_sql_request(char *json_message, char *response)
+{
     cJSON *json = cJSON_Parse(json_message);
-    if (!json) {
+    if (!json)
+    {
         sprintf(response, "{\"status\":\"error\",\"message\":\"Invalid JSON\"}");
         return;
     }
 
     cJSON *action = cJSON_GetObjectItem(json, "action");
-    if (!cJSON_IsString(action)) {
+    if (!cJSON_IsString(action))
+    {
         sprintf(response, "{\"status\":\"error\",\"message\":\"Missing action\"}");
         cJSON_Delete(json);
         return;
     }
 
-    if (strcmp(action->valuestring, "SELECT") == 0) {
+    if (strcmp(action->valuestring, "SELECT") == 0)
+    {
         executeDynamicSelect(json, response);
-    } else {
+    }
+    else
+    {
         sprintf(response,
                 "{\"status\":\"error\",\"message\":\"Unsupported action\"}");
     }
@@ -127,38 +149,43 @@ void process_sql_request(char *json_message, char *response) {
 }
 
 /* ===================== SIGNAL ===================== */
-void handle_sigint(int sig) {
+void handle_sigint(int sig)
+{
     keep_running = 0;
-    if (serverSocket != -1) {
+    if (serverSocket != -1)
+    {
         shutdown(serverSocket, SHUT_RDWR);
         close(serverSocket);
     }
 }
 
-/* ===================== POSTGRES ===================== */
-int connectToPostgres() {
-    conn = PQconnectdb(
-        "host=127.0.0.1 port=5432 dbname=database user=server password=ServerPassword"
-    );
+/* ===================== SQLITE ===================== */
+int connectToSQLite()
+{
+    int rc = sqlite3_open("../database/sports.db", &db);
 
-    if (PQstatus(conn) != CONNECTION_OK) {
-        printf("PostgreSQL connection failed: %s\n", PQerrorMessage(conn));
+    if (rc != SQLITE_OK)
+    {
+        printf("SQLite connection failed: %s\n", sqlite3_errmsg(db));
         return 1;
     }
 
-    printf("Connected to PostgreSQL OK\n");
+    printf("Connected to SQLite OK\n");
     return 0;
 }
 
 /* ===================== SOCKET THREAD ===================== */
-void *socketThread(void *arg) {
+void *socketThread(void *arg)
+{
     int sock = *((int *)arg);
     char buffer[2048];
     char response[2048];
 
-    while (1) {
+    while (1)
+    {
         int n = recv(sock, buffer, sizeof(buffer) - 1, 0);
-        if (n <= 0) break;
+        if (n <= 0)
+            break;
 
         buffer[n] = '\0';
         printf("Received JSON: %s\n", buffer);
@@ -174,7 +201,8 @@ void *socketThread(void *arg) {
 }
 
 /* ===================== MAIN ===================== */
-int main() {
+int main()
+{
     struct sockaddr_in serverAddr;
     struct sockaddr_storage serverStorage;
     socklen_t addr_size;
@@ -191,22 +219,26 @@ int main() {
 
     signal(SIGINT, handle_sigint);
 
-    if (connectToPostgres() != 0) return 1;
+    if (connectToSQLite() != 0)
+        return 1;
 
     printf("Listening...\n");
 
-    while (keep_running) {
+    while (keep_running)
+    {
         addr_size = sizeof serverStorage;
         int newSocket =
             accept(serverSocket, (struct sockaddr *)&serverStorage, &addr_size);
-        if (newSocket < 0) break;
+        if (newSocket < 0)
+            break;
 
         pthread_t tid;
         pthread_create(&tid, NULL, socketThread, &newSocket);
         pthread_detach(tid);
     }
 
-    if (conn) PQfinish(conn);
+    if (db)
+        sqlite3_close(db);
     close(serverSocket);
     printf("Server stopped.\n");
 
