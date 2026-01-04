@@ -22,7 +22,7 @@ class ClientRepository {
         scope.launch {
             var socket: Socket? = null
             try {
-                socket = Socket("172.26.0.3", 1100)
+                socket = Socket("172.30.0.236", 1100)
                 val output = PrintWriter(
                     BufferedWriter(OutputStreamWriter(socket.getOutputStream())),
                     true
@@ -45,11 +45,6 @@ class ClientRepository {
                         "columns",
                         org.json.JSONArray(listOf("email", "nick", "haslo"))
                     )
-                    put("where", JSONObject().apply {
-                        put("column", "nick")
-                        put("operator", "=")
-                        put("value", "macbak")
-                    })
                     put("limit", 10)
                 }
 
