@@ -40,15 +40,15 @@ class ClientRepository {
                 val sqlRequest = JSONObject().apply {
                     put("type", "query")
                     put("action", "SELECT")
-                    put("table", "matches")
+                    put("table", "uzytkownik")
                     put(
                         "columns",
-                        org.json.JSONArray(listOf("id", "team_home", "team_away", "score", "date"))
+                        org.json.JSONArray(listOf("email", "nick", "haslo"))
                     )
                     put("where", JSONObject().apply {
-                        put("column", "team_home")
+                        put("column", "nick")
                         put("operator", "=")
-                        put("value", "Real Madrid")
+                        put("value", "macbak")
                     })
                     put("limit", 10)
                 }
