@@ -19,11 +19,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.TextObfuscationMode
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Stadium
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -54,11 +56,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.ui.auth.view_model.AuthViewModel
-import com.example.sportsmatchtracker.repository.ClientRepository
+import com.example.sportsmatchtracker.repository.client.ClientRepository
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
-
+import kotlin.contracts.contract
 
 
 class AuthActivity : ComponentActivity() {
@@ -84,7 +87,7 @@ fun Auth(modifier: Modifier = Modifier,
          viewModel: AuthViewModel
 ) {
     val uiState = viewModel.uiState.collectAsState()
-    val context = LocalContext.current
+    val userState = viewModel.user.collectAsState()
 
     MaterialTheme {
         Column(
@@ -94,10 +97,16 @@ fun Auth(modifier: Modifier = Modifier,
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            Icon(
+                imageVector = Icons.Default.Stadium,
+                contentDescription = "App icon",
+                modifier = Modifier
+                    .padding(top = 60.dp)
+                    .size(50.dp)
+            )
             //Title
             Text(
                 text = "Sports Match Tracker",
-                modifier = Modifier.padding(top = 60.dp),
                 fontWeight = FontWeight.Bold,
                 fontSize = 32.sp
             )
@@ -129,6 +138,25 @@ fun Auth(modifier: Modifier = Modifier,
                     isError = uiState.value.showEmailError,
                     errorMessage = uiState.value.emailErrorMessage
                 )
+
+                AnimatedContent(
+                    modifier = Modifier.fillMaxWidth(),
+                    targetState = uiState.value.isInSignUpState,
+                    transitionSpec = {
+                        expandVertically(tween(300)) togetherWith  shrinkVertically(tween(300))
+                    }
+                ) { signUp ->
+                    if (signUp) {
+                        StyledTextField(
+                            text = uiState.value.nick,
+                            label = "Nick",
+                            onValueChange = viewModel::onNickChange,
+                            isError = uiState.value.showNickError,
+                            errorMessage = uiState.value.nickErrorMessage
+                        )
+                    }
+                }
+
                 SecuredTextField(
                     state = rememberTextFieldState(),
                     label = "Password",
@@ -159,18 +187,18 @@ fun Auth(modifier: Modifier = Modifier,
             ContinueButton(
                 onClick = {
                     if (uiState.value.isInSignUpState) {
-                        //viewModel.register()
+                        viewModel.register()
                     } else {
-                        //viewModel.login()
+                        viewModel.login()
                     }
                 }
             )
 
-//            if(uiState.user == null) {
-//                Text("User not logged in")
-//            } else {
-//                Text("User logged in as ${uiState.user?.uid}")
-//            }
+            if(userState.value == null) {
+                Text("User not logged in")
+            } else {
+                Text("User logged in as ${userState.value!!.nick}")
+            }
 
         }
     }
@@ -344,6 +372,6 @@ fun ContinueButton(onClick: () -> Unit){
 @Composable
 fun ConnectPreview() {
     SportsMatchTrackerTheme {
-        Auth(viewModel = AuthViewModel(ClientRepository()))
+        Auth(viewModel = AuthViewModel(AuthRepository()))
     }
 }

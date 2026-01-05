@@ -68,6 +68,35 @@ int executeDynamicSelect(cJSON *json, char *response)
                     value->valuestring);
         }
     }
+    else if (cJSON_IsArray(where))
+    {
+        /* Multiple WHERE conditions with AND */
+        int where_count = cJSON_GetArraySize(where);
+        if (where_count > 0)
+        {
+            strcat(where_str, " WHERE ");
+            for (int i = 0; i < where_count; i++)
+            {
+                cJSON *condition = cJSON_GetArrayItem(where, i);
+                cJSON *column = cJSON_GetObjectItem(condition, "column");
+                cJSON *op = cJSON_GetObjectItem(condition, "operator");
+                cJSON *value = cJSON_GetObjectItem(condition, "value");
+
+                if (cJSON_IsString(column) && cJSON_IsString(op) && cJSON_IsString(value))
+                {
+                    char condition_str[256];
+                    sprintf(condition_str, "%s %s '%s'",
+                            column->valuestring,
+                            op->valuestring,
+                            value->valuestring);
+                    strcat(where_str, condition_str);
+
+                    if (i < where_count - 1)
+                        strcat(where_str, " AND ");
+                }
+            }
+        }
+    }
 
     sprintf(sql, "SELECT %s FROM %s%s", columns_str, table->valuestring, where_str);
     printf("Executing SQL: %s\n", sql);
@@ -109,11 +138,103 @@ int executeDynamicSelect(cJSON *json, char *response)
 
     char *out = cJSON_PrintUnformatted(json_response);
     strcpy(response, out);
+    printf("Response JSON: %s\n", response);
 
     free(out);
     cJSON_Delete(json_response);
     sqlite3_finalize(stmt);
 
+    return 0;
+}
+
+/* ===================== INSERT DYNAMIC ===================== */
+int executeDynamicInsert(cJSON *json, char *response)
+{
+    char sql[2048];
+
+    cJSON *table = cJSON_GetObjectItem(json, "table");
+    if (!cJSON_IsString(table))
+    {
+        sprintf(response, "{\"status\":\"error\",\"message\":\"Missing table name\"}");
+        return 1;
+    }
+
+    /* Columns */
+    cJSON *columns = cJSON_GetObjectItem(json, "columns");
+    if (!cJSON_IsArray(columns))
+    {
+        sprintf(response, "{\"status\":\"error\",\"message\":\"Missing columns array\"}");
+        return 1;
+    }
+
+    /* Values */
+    cJSON *values = cJSON_GetObjectItem(json, "values");
+    if (!cJSON_IsArray(values))
+    {
+        sprintf(response, "{\"status\":\"error\",\"message\":\"Missing values array\"}");
+        return 1;
+    }
+
+    int col_count = cJSON_GetArraySize(columns);
+    int val_count = cJSON_GetArraySize(values);
+
+    if (col_count != val_count)
+    {
+        sprintf(response, "{\"status\":\"error\",\"message\":\"Column and value count mismatch\"}");
+        return 1;
+    }
+
+    /* Build columns string */
+    char columns_str[512] = "";
+    for (int i = 0; i < col_count; i++)
+    {
+        cJSON *col = cJSON_GetArrayItem(columns, i);
+        if (cJSON_IsString(col))
+        {
+            strcat(columns_str, col->valuestring);
+            if (i < col_count - 1)
+                strcat(columns_str, ", ");
+        }
+    }
+
+    /* Build values string */
+    char values_str[512] = "";
+    for (int i = 0; i < val_count; i++)
+    {
+        cJSON *val = cJSON_GetArrayItem(values, i);
+        if (cJSON_IsString(val))
+        {
+            strcat(values_str, "'");
+            strcat(values_str, val->valuestring);
+            strcat(values_str, "'");
+            if (i < val_count - 1)
+                strcat(values_str, ", ");
+        }
+    }
+
+    sprintf(sql, "INSERT INTO %s (%s) VALUES (%s)",
+            table->valuestring, columns_str, values_str);
+    printf("Executing SQL: %s\n", sql);
+
+    char *errMsg = NULL;
+    int rc = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
+
+    if (rc != SQLITE_OK)
+    {
+        sprintf(response,
+                "{\"status\":\"error\",\"message\":\"Insert failed: %s\"}",
+                errMsg ? errMsg : sqlite3_errmsg(db));
+        if (errMsg)
+            sqlite3_free(errMsg);
+        return 1;
+    }
+
+    long long lastId = sqlite3_last_insert_rowid(db);
+
+    sprintf(response,
+            "{\"status\":\"success\",\"message\":\"Row inserted\",\"lastId\":%lld}",
+            lastId);
+    printf("Response JSON: %s\n", response);
     return 0;
 }
 
@@ -138,6 +259,10 @@ void process_sql_request(char *json_message, char *response)
     if (strcmp(action->valuestring, "SELECT") == 0)
     {
         executeDynamicSelect(json, response);
+    }
+    else if (strcmp(action->valuestring, "INSERT") == 0)
+    {
+        executeDynamicInsert(json, response);
     }
     else
     {
@@ -179,7 +304,8 @@ void *socketThread(void *arg)
 {
     int sock = *((int *)arg);
     printf("Client connected: socket %d\n", sock);
-    if (sock >= 0 ){
+    if (sock >= 0)
+    {
         char *connected = "connected\n";
         send(sock, connected, strlen(connected), 0);
     }

@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sportsmatchtracker.App
-import com.example.sportsmatchtracker.repository.ClientRepository
+import com.example.sportsmatchtracker.repository.client.ClientRepository
 import kotlinx.coroutines.launch
 
 class MainViewModel(
