@@ -7,8 +7,4 @@ class App: Application() {
     val clientRepository: ClientRepository by lazy {
         ClientRepository()
     }
-
-    override fun onCreate() {
-        super.onCreate()
-    }
 }

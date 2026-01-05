@@ -1,77 +1,83 @@
 package com.example.sportsmatchtracker.repository
 import com.example.sportsmatchtracker.model.Client
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
+import kotlinx.coroutines.withTimeout
 import java.io.*
 import java.net.Socket
 
 class ClientRepository {
     private val _clientState = MutableStateFlow(Client())
     val clientState: StateFlow<Client> = _clientState.asStateFlow()
-    
-    private val scope = CoroutineScope(Dispatchers.IO)
 
-    fun connectToServer() {
-        scope.launch {
-            var socket: Socket? = null
-            try {
-                socket = Socket("172.30.0.236", 1100)
-                val output = PrintWriter(
-                    BufferedWriter(OutputStreamWriter(socket.getOutputStream())),
-                    true
-                )
-                val input = BufferedReader(InputStreamReader(socket.getInputStream()))
+    suspend fun connectToServer(): Boolean {
+        _clientState.update { it.copy(isLoading = true, connectionStatus = "Connecting...") }
+        return try {
+            withTimeout(3000) {
+                withContext(Dispatchers.IO) {
+                    var socket: Socket? = null
+                    try {
+                        socket = Socket()
+                        socket.soTimeout = 3000
+                        socket.connect(java.net.InetSocketAddress("172.26.0.3", 1100), 3000)
+                        println("Socket connected")
+                        
+                        val input = BufferedReader(InputStreamReader(socket.getInputStream()))
 
-                withContext(Dispatchers.Main) {
-                    _clientState.update { it.copy(
-                        connected = true,
-                        connectionStatus = "Connected to server"
-                    )}
+                        // get response from server
+                        println("Waiting for server response...")
+                        val response = input.readLine()
+                        println("Server response: $response")
+
+                        if (response == "connected") {
+                            _clientState.update {
+                                it.copy(
+                                    connected = true,
+                                    isLoading = false,
+                                    connectionStatus = response
+                                )
+                            }
+                            true
+                        } else {
+                            _clientState.update {
+                                it.copy(
+                                    connected = false,
+                                    isLoading = false,
+                                    connectionStatus = "Failed to connect to server"
+                                )
+                            }
+                            false
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        _clientState.update {
+                            it.copy(
+                                connected = false,
+                                isLoading = false,
+                                connectionStatus = "Connection failed: ${e.message}"
+                            )
+                        }
+                        false
+                    } finally {
+                        socket?.close()
+                    }
                 }
-
-                // Create example request
-                val sqlRequest = JSONObject().apply {
-                    put("type", "query")
-                    put("action", "SELECT")
-                    put("table", "uzytkownik")
-                    put(
-                        "columns",
-                        org.json.JSONArray(listOf("email", "nick", "haslo"))
-                    )
-                    put("limit", 10)
-                }
-
-                // Send JSON to server
-                println("Sending to server: $sqlRequest")
-                output.println(sqlRequest.toString())
-
-                // get response from server
-                val response = input.readLine()
-                println("Server response: $response")
-                
-                withContext(Dispatchers.Main) {
-                    _clientState.update { it.copy(
-                        responseFromServer = response ?: "No response"
-                    )}
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    _clientState.update { it.copy(
-                        connected = false,
-                        connectionStatus = "Connection failed: ${e.message}",
-                    )}
-                }
-            } finally {
-                socket?.close()
             }
+        } catch (_: TimeoutCancellationException) {
+            println("Connection timeout occurred")
+            _clientState.update {
+                it.copy(
+                    connected = false,
+                    isLoading = false,
+                    connectionStatus = "Connection timeout - server not responding"
+                )
+            }
+            false
         }
     }
 }

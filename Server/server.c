@@ -178,6 +178,11 @@ int connectToSQLite()
 void *socketThread(void *arg)
 {
     int sock = *((int *)arg);
+    printf("Client connected: socket %d\n", sock);
+    if (sock >= 0 ){
+        char *connected = "connected\n";
+        send(sock, connected, strlen(connected), 0);
+    }
     char buffer[2048];
     char response[2048];
 
