@@ -17,14 +17,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class AuthViewModel (
+class AuthViewModel(
     private val authRepository: AuthRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUIState())
     val uiState: StateFlow<AuthUIState> = _uiState.asStateFlow()
     private val _user = MutableStateFlow<User?>(null)
     val user: StateFlow<User?> = _user.asStateFlow()
-
 
 
     // Inject dependencies
@@ -64,96 +63,92 @@ class AuthViewModel (
     fun setSignUpState(newValue: Boolean) =
         _uiState.update { it.copy(isInSignUpState = newValue) }
 
-    fun login() {
+    fun login() = viewModelScope.launch {
         val currentState = _uiState.value
-        
-        // Validate inputs
-        if (currentState.email.isBlank()) {
-            _uiState.update { it.copy(showEmailError = true, emailErrorMessage = "Email cannot be empty") }
-            return
-        }
-        if (currentState.password.isBlank()) {
-            _uiState.update { it.copy(showPasswordError = true, passwordErrorMessage = "Password cannot be empty") }
-            return
-        }
-        
-        viewModelScope.launch {
-            val loginSuccessful = authRepository.login(currentState.email, currentState.password)
 
-            if (!loginSuccessful) {
-                _uiState.update {
-                    it.copy(
-                        showPasswordError = true,
-                        passwordErrorMessage = "Invalid email or password"
-                    )
-                }
+        runCatching {
+            authRepository.login(currentState.email, currentState.password)
+        }.onFailure {
+            updateUIBasedOnErrorType(it as AuthError)
+        }
+    }
+
+    fun register() = viewModelScope.launch {
+        val currentState = _uiState.value
+
+        // Validate inputs
+        if (currentState.password != currentState.repeatPassword) {
+            _uiState.update {
+                it.copy(
+                    showRepeatPasswordError = true,
+                    repeatPasswordErrorMessage = "Passwords do not match"
+                )
             }
+            return@launch
+        }
+        runCatching {
+            authRepository.register(currentState.email, currentState.nick, currentState.password)
+        }.onFailure {
+            updateUIBasedOnErrorType(it as AuthError)
         }
     }
 
-    fun register() {
-        val currentState = _uiState.value
-
-        // Validate inputs
-        if (currentState.email.isBlank()) {
-            _uiState.update { it.copy(showEmailError = true, emailErrorMessage = "Email cannot be empty") }
-            return
-        }
-        if (currentState.password.isBlank()) {
-            _uiState.update { it.copy(showPasswordError = true, passwordErrorMessage = "Password cannot be empty") }
-            return
-        }
-        if (currentState.repeatPassword.isBlank()) {
-            _uiState.update { it.copy(showRepeatPasswordError = true, repeatPasswordErrorMessage = "Repeat password cannot be empty") }
-            return
-        }
-        if(currentState.password != currentState.repeatPassword) {
-            _uiState.update { it.copy(showRepeatPasswordError = true, repeatPasswordErrorMessage = "Passwords do not match") }
-        }
-
-        viewModelScope.launch {
-            val registerSuccessful = authRepository.register(currentState.email, currentState.nick, currentState.password)
-        }
-    }
-    
     fun logout() {
         authRepository.logout()
         _uiState.update { it.copy(email = "", password = "") }
     }
 
-    private fun updateUIBasedOnErrorType(exception: Throwable) {
-        val authError = AuthError(errorMessage = "error")
+    private fun updateUIBasedOnErrorType(authError: AuthError) {
         if (authError.emailError && authError.passwordError) {
-            _uiState.update { it.copy(
-                showEmailError = true ,
-                showPasswordError = true,
-                showRepeatPasswordError = false,
-                passwordErrorMessage = authError.errorMessage
-            )}
-        }
-        else if (authError.passwordError) {
-            _uiState.update { it.copy(
-                showPasswordError = true,
-                showEmailError = false,
-                showRepeatPasswordError = false,
-                passwordErrorMessage = authError.errorMessage
-            )}
-        }
-        else if (authError.emailError) {
-            _uiState.update { it.copy(
-                showEmailError = true,
-                showPasswordError = false,
-                showRepeatPasswordError = false,
-                emailErrorMessage = authError.errorMessage
-            )}
-        }
-        else if(authError.repeatPasswordError) {
-            _uiState.update { it.copy(
-                showEmailError = false,
-                showPasswordError = false,
-                showRepeatPasswordError = true,
-                repeatPasswordErrorMessage = authError.errorMessage
-            ) }
+            _uiState.update {
+                it.copy(
+                    showEmailError = false,
+                    showNickError = false,
+                    showPasswordError = true,
+                    showRepeatPasswordError = false,
+                    passwordErrorMessage = authError.errorMessage
+                )
+            }
+        } else if (authError.passwordError) {
+            _uiState.update {
+                it.copy(
+                    showPasswordError = true,
+                    showEmailError = false,
+                    showNickError = false,
+                    showRepeatPasswordError = false,
+                    passwordErrorMessage = authError.errorMessage
+                )
+            }
+        } else if (authError.emailError) {
+            _uiState.update {
+                it.copy(
+                    showEmailError = true,
+                    showNickError = false,
+                    showPasswordError = false,
+                    showRepeatPasswordError = false,
+                    emailErrorMessage = authError.errorMessage
+                )
+            }
+        } else if (authError.repeatPasswordError) {
+            _uiState.update {
+                it.copy(
+                    showEmailError = false,
+                    showNickError = false,
+                    showPasswordError = false,
+                    showRepeatPasswordError = true,
+                    repeatPasswordErrorMessage = authError.errorMessage
+                )
+            }
+        } else if (authError.nickError) {
+            _uiState.update {
+                it.copy(
+                    showEmailError = false,
+                    showPasswordError = false,
+                    showRepeatPasswordError = false,
+                    showNickError = true,
+                    nickErrorMessage = authError.errorMessage
+                )
+            }
         }
     }
 }

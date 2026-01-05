@@ -1,5 +1,6 @@
 package com.example.sportsmatchtracker.repository.auth
 
+import com.example.sportsmatchtracker.model.auth.AuthError
 import com.example.sportsmatchtracker.model.user.User
 import com.example.sportsmatchtracker.network.SocketManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,14 +14,45 @@ class AuthRepository {
     val userState: StateFlow<User?> = _userState.asStateFlow()
 
     private val socketManager = SocketManager.getInstance()
-
-    suspend fun login(email: String, password: String): Boolean {
-        if (!socketManager.isConnected) {
-            println("Cannot login - not connected to server")
-            return false
+    
+    private fun parseServerError(message: String): AuthError {
+        return when {
+            message.contains("UNIQUE constraint failed: uzytkownik.email", ignoreCase = true) -> {
+                AuthError(
+                    errorMessage = "This email is already registered",
+                    emailError = true
+                )
+            }
+            message.contains("UNIQUE constraint failed: uzytkownik.nick", ignoreCase = true) -> {
+                AuthError(
+                    errorMessage = "This nick is already taken",
+                    nickError = true
+                )
+            }
+            message.contains("NOT NULL constraint failed", ignoreCase = true) -> {
+                AuthError(
+                    errorMessage = "All fields must be filled",
+                    emailError = true,
+                    passwordError = true
+                )
+            }
+            message.contains("Invalid email or password", ignoreCase = true) -> {
+                AuthError(
+                    errorMessage = "Invalid email or password",
+                    emailError = true,
+                    passwordError = true
+                )
+            }
+            else -> {
+                AuthError(
+                    errorMessage = "Unidentified error: $message"
+                )
+            }
         }
+    }
 
-        val request = JSONObject().apply {
+    private fun formLoginRequest(email: String, password: String): JSONObject {
+        return JSONObject().apply {
             put("action", "SELECT")
             put("table", "uzytkownik")
             put("columns", JSONArray(listOf("email", "nick")))
@@ -37,15 +69,36 @@ class AuthRepository {
                 })
             })
         }
+    }
 
-        val response = socketManager.sendRequestWithResponse(request)
-        
-        if (response == null) {
-            println("No response from server")
-            return false
+    private fun fromRegisterRequest(email: String, nick: String, password: String): JSONObject {
+        return JSONObject().apply {
+            put("action", "INSERT")
+            put("table", "uzytkownik")
+            put("columns", JSONArray(listOf("email", "nick", "haslo")))
+            put("values", JSONArray(listOf(email, nick, password)))
+        }
+    }
+
+    suspend fun login(email: String, password: String) {
+        if (!socketManager.isConnected) {
+            throw AuthError(errorMessage = "No connection to server", generalError = true)
         }
 
-        return try {
+        if (email.isBlank()) {
+            throw AuthError(errorMessage = "Email cannot be empty", emailError = true)
+        }
+        if (password.isBlank()) {
+            throw AuthError(errorMessage = "Password cannot be empty", passwordError = true)
+        }
+
+        val request = formLoginRequest(email, password)
+        val response = socketManager.sendRequestWithResponse(request)?: throw AuthError(
+            errorMessage = "No response from server",
+            generalError = true
+        )
+
+        try {
             val jsonResponse = JSONObject(response)
             val status = jsonResponse.getString("status")
             
@@ -60,57 +113,57 @@ class AuthRepository {
                         email = userJson.getString("email")
                     )
                     _userState.value = user
-                    println("Login successful: ${user.nick}")
-                    true
+
                 } else {
-                    println("Invalid email or password")
-                    false
+                   throw AuthError(errorMessage = "Invalid email or password", passwordError = true, emailError = true)
                 }
             } else {
-                println("Server error: ${jsonResponse.optString("message")}")
-                false
+                throw AuthError(errorMessage = jsonResponse.optString("message"), generalError = true)
             }
+        } catch (e: AuthError) {
+            throw e
         } catch (e: Exception) {
             e.printStackTrace()
-            println("Error parsing response: ${e.message}")
-            false
+            throw AuthError(errorMessage = "Error when trying to login: ${e.message}", generalError = true)
         }
     }
 
-    suspend fun register(email: String, nick: String, password: String): Boolean {
+    suspend fun register(email: String, nick: String, password: String) {
         if (!socketManager.isConnected) {
-            println("Cannot register - not connected to server")
-            return false
+            throw AuthError(errorMessage = "No connection to server", generalError = true)
         }
 
-        val request = JSONObject().apply {
-            put("action", "INSERT")
-            put("table", "uzytkownik")
-            put("columns", JSONArray(listOf("email", "nick", "haslo")))
-            put("values", JSONArray(listOf(email, nick, password)))
+        if (email.isBlank()) {
+            throw AuthError(errorMessage = "Email cannot be empty", emailError = true)
+        }
+        if (nick.isBlank()) {
+            throw AuthError(errorMessage = "Nick cannot be empty", nickError = true)
+        }
+        if (password.isBlank()) {
+            throw AuthError(errorMessage = "Password cannot be empty", passwordError = true)
         }
 
-        val response = socketManager.sendRequestWithResponse(request)
+        val request = fromRegisterRequest(email, nick, password)
+        val response = socketManager.sendRequestWithResponse(request) ?: throw AuthError(
+            errorMessage = "No response from server",
+            generalError = true
+        )
 
-        if (response == null) {
-            println("No response from server")
-            return false
-        }
-
-        return try {
+        try {
             val jsonResponse = JSONObject(response)
             val status = jsonResponse.getString("status")
 
             if (status == "success") {
                login(email, password)
             } else {
-                println("Server error: ${jsonResponse.optString("message")}")
-                false
+                val errorMessage = jsonResponse.optString("message", "Unknown error")
+                throw parseServerError(errorMessage)
             }
+        } catch (e: AuthError) {
+            throw e
         } catch (e: Exception) {
             e.printStackTrace()
-            println("Error parsing response: ${e.message}")
-            false
+            throw AuthError(errorMessage = "Error when trying to register: ${e.message}", generalError = true)
         }
     }
     

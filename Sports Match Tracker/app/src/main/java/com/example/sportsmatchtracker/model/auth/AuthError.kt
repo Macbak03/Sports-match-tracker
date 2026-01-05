@@ -2,6 +2,7 @@ package com.example.sportsmatchtracker.model.auth
 
 data class AuthError(
     val errorMessage: String,
+    val generalError: Boolean = false,
     val emailError: Boolean = false,
     val nickError: Boolean = false,
     val passwordError: Boolean = false,
