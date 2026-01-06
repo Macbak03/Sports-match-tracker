@@ -1,10 +1,5 @@
 package com.example.sportsmatchtracker.ui.auth.view
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -16,7 +11,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -36,7 +30,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
@@ -58,40 +50,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.ui.auth.view_model.AuthViewModel
-import com.example.sportsmatchtracker.repository.client.ClientRepository
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlin.contracts.contract
-
-
-class AuthActivity : ComponentActivity() {
-    private val viewModel: AuthViewModel by viewModels { AuthViewModel.Factory }
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            SportsMatchTrackerTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Auth(
-                        modifier = Modifier.padding(innerPadding),
-                        viewModel = viewModel
-                    )
-                }
-            }
-        }
-    }
-}
 
 @Composable
-fun Auth(modifier: Modifier = Modifier,
-         viewModel: AuthViewModel
+fun AuthScreen(
+    modifier: Modifier = Modifier,
+    viewModel: AuthViewModel
 ) {
     val uiState = viewModel.uiState.collectAsState()
-    val userState = viewModel.user.collectAsState()
 
     MaterialTheme {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .padding(all = 20.dp)
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -193,13 +164,6 @@ fun Auth(modifier: Modifier = Modifier,
                     }
                 }
             )
-
-            if(userState.value == null) {
-                Text("User not logged in")
-            } else {
-                Text("User logged in as ${userState.value!!.nick}")
-            }
-
         }
     }
 }
@@ -251,7 +215,7 @@ private fun SignUpColumn(
 }
 
 @Composable
-fun StyledTextField(
+private fun StyledTextField(
     text: String,
     label: String,
     onValueChange: (String) -> Unit,
@@ -289,7 +253,7 @@ fun StyledTextField(
 }
 
 @Composable
-fun SecuredTextField(
+private fun SecuredTextField(
     state: TextFieldState,
     label: String,
     onValueChange: (String) -> Unit,
@@ -341,10 +305,8 @@ fun SecuredTextField(
     }
 }
 
-
-
 @Composable
-fun ContinueButton(onClick: () -> Unit){
+private fun ContinueButton(onClick: () -> Unit){
     val roundness = 12.dp
     val text = "Continue"
     Button(
@@ -367,11 +329,10 @@ fun ContinueButton(onClick: () -> Unit){
     }
 }
 
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ConnectPreview() {
     SportsMatchTrackerTheme {
-        Auth(viewModel = AuthViewModel(AuthRepository()))
+        AuthScreen(viewModel = AuthViewModel(AuthRepository()))
     }
 }
