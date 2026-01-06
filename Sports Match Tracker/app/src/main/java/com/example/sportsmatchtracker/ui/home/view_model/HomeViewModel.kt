@@ -3,28 +3,44 @@ package com.example.sportsmatchtracker.ui.home.view_model
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sportsmatchtracker.App
+import com.example.sportsmatchtracker.model.match.Match
+import com.example.sportsmatchtracker.model.user.User
+import com.example.sportsmatchtracker.repository.Home.HomeRepository
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.ui.auth.view_model.AuthViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    private val authRepository: AuthRepository
+    private val homeRepository: HomeRepository
 ): ViewModel() {
-    // Inject dependencies
+
+    private val _matches = MutableStateFlow<List<Match>>(emptyList())
+    val matches: StateFlow<List<Match>> = _matches.asStateFlow()
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val authRepository = (this[APPLICATION_KEY] as App).authRepository
+                val homeRepository = (this[APPLICATION_KEY] as App).homeRepository
                 HomeViewModel(
-                    authRepository = authRepository,
+                    homeRepository = homeRepository
                 )
             }
         }
     }
+    init {
+        // Observe user state changes
+        viewModelScope.launch {
+            homeRepository.matchesState.collect { matchList ->
+                _matches.value = matchList
+            }
+        }
 
-    fun logout() {
-        authRepository.logout()
     }
+
 }

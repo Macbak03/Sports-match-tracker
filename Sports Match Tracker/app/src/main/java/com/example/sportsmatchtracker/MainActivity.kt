@@ -12,25 +12,26 @@ import com.example.sportsmatchtracker.navigation.AppNavigation
 import com.example.sportsmatchtracker.ui.auth.view_model.AuthViewModel
 import com.example.sportsmatchtracker.ui.home.view_model.HomeViewModel
 import com.example.sportsmatchtracker.ui.network.view_model.ConnectionViewModel
+import com.example.sportsmatchtracker.ui.settings.view_model.SettingsViewModel
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
 
 class MainActivity : ComponentActivity() {
     private val connectionViewModel: ConnectionViewModel by viewModels { ConnectionViewModel.Factory }
     private val authViewModel: AuthViewModel by viewModels { AuthViewModel.Factory }
     private val homeViewModel: HomeViewModel by viewModels { HomeViewModel.Factory }
+    private val settingsViewModel: SettingsViewModel by viewModels { SettingsViewModel.Factory }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             SportsMatchTrackerTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    AppNavigation(
-                        connectionViewModel = connectionViewModel,
-                        authViewModel = authViewModel,
-                        homeViewModel = homeViewModel,
-                    )
-                }
+                AppNavigation(
+                    connectionViewModel = connectionViewModel,
+                    authViewModel = authViewModel,
+                    homeViewModel = homeViewModel,
+                    settingsViewModel = settingsViewModel,
+                )
             }
         }
     }

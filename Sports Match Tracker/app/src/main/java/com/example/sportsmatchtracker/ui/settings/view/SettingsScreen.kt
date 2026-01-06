@@ -1,0 +1,53 @@
+package com.example.sportsmatchtracker.ui.settings.view
+
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.example.sportsmatchtracker.model.user.User
+import com.example.sportsmatchtracker.repository.auth.AuthRepository
+import com.example.sportsmatchtracker.ui.auth.view.AuthScreen
+import com.example.sportsmatchtracker.ui.auth.view_model.AuthViewModel
+import com.example.sportsmatchtracker.ui.settings.view_model.SettingsViewModel
+import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
+
+@Composable
+fun SettingsScreen(
+    user: User,
+    viewModel: SettingsViewModel
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically)
+    ) {
+        Button(
+            modifier = Modifier.size(width = 250.dp, height = 40.dp),
+            onClick = { viewModel.logout() }) {
+            Text("Sign out")
+        }
+    }
+}
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun ConnectPreview() {
+    SportsMatchTrackerTheme {
+        SettingsScreen(user = User(), viewModel = SettingsViewModel(AuthRepository()))
+    }
+}

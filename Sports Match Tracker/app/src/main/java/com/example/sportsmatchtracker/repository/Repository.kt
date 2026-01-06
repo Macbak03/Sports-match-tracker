@@ -1,0 +1,48 @@
+package com.example.sportsmatchtracker.repository
+
+import com.example.sportsmatchtracker.model.where.WhereCondition
+import com.example.sportsmatchtracker.network.SocketManager
+import org.json.JSONArray
+import org.json.JSONObject
+
+open class Repository {
+    protected val socketManager = SocketManager.getInstance()
+
+    protected fun selectRequest(
+        table: String,
+        columns: List<String>,
+        where: List<WhereCondition>? = null
+    ): JSONObject {
+        return JSONObject().apply {
+            put("action", "SELECT")
+            put("table", table)
+            put("columns", JSONArray(columns))
+
+            where?.let {
+                put("where", JSONArray().apply {
+                    it.forEach { condition ->
+                        put(JSONObject().apply {
+                            put("column", condition.column)
+                            put("operator", condition.operator)
+                            put("value", condition.value)
+                        })
+                    }
+                })
+            }
+        }
+    }
+
+    protected fun insertRequest(
+        table: String,
+        columns: List<String>,
+        values: List<Any>
+    ): JSONObject {
+        return JSONObject().apply {
+            put("action", "INSERT")
+            put("table", table)
+            put("columns", JSONArray(columns))
+            put("values", JSONArray(values))
+        }
+    }
+
+}

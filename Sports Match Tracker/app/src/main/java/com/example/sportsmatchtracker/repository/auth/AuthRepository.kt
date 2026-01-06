@@ -2,33 +2,36 @@ package com.example.sportsmatchtracker.repository.auth
 
 import com.example.sportsmatchtracker.model.auth.AuthError
 import com.example.sportsmatchtracker.model.user.User
+import com.example.sportsmatchtracker.model.where.WhereCondition
 import com.example.sportsmatchtracker.network.SocketManager
+import com.example.sportsmatchtracker.repository.Repository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
 
-class AuthRepository {
+class AuthRepository : Repository() {
     private val _userState = MutableStateFlow<User?>(null)
     val userState: StateFlow<User?> = _userState.asStateFlow()
+    val table = "uzytkownik"
 
-    private val socketManager = SocketManager.getInstance()
-    
     private fun parseServerError(message: String): AuthError {
         return when {
-            message.contains("UNIQUE constraint failed: uzytkownik.email", ignoreCase = true) -> {
+            message.contains("UNIQUE constraint failed: ${table}.email", ignoreCase = true) -> {
                 AuthError(
                     errorMessage = "This email is already registered",
                     emailError = true
                 )
             }
-            message.contains("UNIQUE constraint failed: uzytkownik.nick", ignoreCase = true) -> {
+
+            message.contains("UNIQUE constraint failed: ${table}.nick", ignoreCase = true) -> {
                 AuthError(
                     errorMessage = "This nick is already taken",
                     nickError = true
                 )
             }
+
             message.contains("NOT NULL constraint failed", ignoreCase = true) -> {
                 AuthError(
                     errorMessage = "All fields must be filled",
@@ -36,6 +39,7 @@ class AuthRepository {
                     passwordError = true
                 )
             }
+
             message.contains("Invalid email or password", ignoreCase = true) -> {
                 AuthError(
                     errorMessage = "Invalid email or password",
@@ -43,6 +47,7 @@ class AuthRepository {
                     passwordError = true
                 )
             }
+
             else -> {
                 AuthError(
                     errorMessage = "Unidentified error: $message"
@@ -51,34 +56,34 @@ class AuthRepository {
         }
     }
 
-    private fun formLoginRequest(email: String, password: String): JSONObject {
-        return JSONObject().apply {
-            put("action", "SELECT")
-            put("table", "uzytkownik")
-            put("columns", JSONArray(listOf("email", "nick")))
-            put("where", JSONArray().apply {
-                put(JSONObject().apply {
-                    put("column", "email")
-                    put("operator", "=")
-                    put("value", email)
-                })
-                put(JSONObject().apply {
-                    put("column", "haslo")
-                    put("operator", "=")
-                    put("value", password)
-                })
-            })
-        }
-    }
-
-    private fun fromRegisterRequest(email: String, nick: String, password: String): JSONObject {
-        return JSONObject().apply {
-            put("action", "INSERT")
-            put("table", "uzytkownik")
-            put("columns", JSONArray(listOf("email", "nick", "haslo")))
-            put("values", JSONArray(listOf(email, nick, password)))
-        }
-    }
+//    private fun formLoginRequest(email: String, password: String): JSONObject {
+//        return JSONObject().apply {
+//            put("action", "SELECT")
+//            put("table", "uzytkownik")
+//            put("columns", JSONArray(listOf("email", "nick")))
+//            put("where", JSONArray().apply {
+//                put(JSONObject().apply {
+//                    put("column", "email")
+//                    put("operator", "=")
+//                    put("value", email)
+//                })
+//                put(JSONObject().apply {
+//                    put("column", "haslo")
+//                    put("operator", "=")
+//                    put("value", password)
+//                })
+//            })
+//        }
+//    }
+//
+//    private fun fromRegisterRequest(email: String, nick: String, password: String): JSONObject {
+//        return JSONObject().apply {
+//            put("action", "INSERT")
+//            put("table", "uzytkownik")
+//            put("columns", JSONArray(listOf("email", "nick", "haslo")))
+//            put("values", JSONArray(listOf(email, nick, password)))
+//        }
+//    }
 
     suspend fun login(email: String, password: String) {
         if (!socketManager.isConnected) {
@@ -92,8 +97,15 @@ class AuthRepository {
             throw AuthError(errorMessage = "Password cannot be empty", passwordError = true)
         }
 
-        val request = formLoginRequest(email, password)
-        val response = socketManager.sendRequestWithResponse(request)?: throw AuthError(
+        val request = selectRequest(
+            table,
+            listOf("email", "nick"),
+            listOf(
+                WhereCondition("email", "=", email),
+                WhereCondition("haslo", "=", password)
+            )
+        )
+        val response = socketManager.sendRequestWithResponse(request) ?: throw AuthError(
             errorMessage = "No response from server",
             generalError = true
         )
@@ -101,11 +113,11 @@ class AuthRepository {
         try {
             val jsonResponse = JSONObject(response)
             val status = jsonResponse.getString("status")
-            
+
             if (status == "success") {
                 val data = jsonResponse.getJSONArray("data")
                 val count = jsonResponse.getInt("count")
-                
+
                 if (count > 0) {
                     val userJson = data.getJSONObject(0)
                     val user = User(
@@ -115,16 +127,26 @@ class AuthRepository {
                     _userState.value = user
 
                 } else {
-                   throw AuthError(errorMessage = "Invalid email or password", passwordError = true, emailError = true)
+                    throw AuthError(
+                        errorMessage = "Invalid email or password",
+                        passwordError = true,
+                        emailError = true
+                    )
                 }
             } else {
-                throw AuthError(errorMessage = jsonResponse.optString("message"), generalError = true)
+                throw AuthError(
+                    errorMessage = jsonResponse.optString("message"),
+                    generalError = true
+                )
             }
         } catch (e: AuthError) {
             throw e
         } catch (e: Exception) {
             e.printStackTrace()
-            throw AuthError(errorMessage = "Error when trying to login: ${e.message}", generalError = true)
+            throw AuthError(
+                errorMessage = "Error when trying to login: ${e.message}",
+                generalError = true
+            )
         }
     }
 
@@ -143,7 +165,11 @@ class AuthRepository {
             throw AuthError(errorMessage = "Password cannot be empty", passwordError = true)
         }
 
-        val request = fromRegisterRequest(email, nick, password)
+        val request = insertRequest(
+            table = "uzytkownik",
+            columns = listOf("email", "nick", "haslo"),
+            values = listOf(email, nick, password)
+        )
         val response = socketManager.sendRequestWithResponse(request) ?: throw AuthError(
             errorMessage = "No response from server",
             generalError = true
@@ -154,7 +180,7 @@ class AuthRepository {
             val status = jsonResponse.getString("status")
 
             if (status == "success") {
-               login(email, password)
+                login(email, password)
             } else {
                 val errorMessage = jsonResponse.optString("message", "Unknown error")
                 throw parseServerError(errorMessage)
@@ -163,10 +189,13 @@ class AuthRepository {
             throw e
         } catch (e: Exception) {
             e.printStackTrace()
-            throw AuthError(errorMessage = "Error when trying to register: ${e.message}", generalError = true)
+            throw AuthError(
+                errorMessage = "Error when trying to register: ${e.message}",
+                generalError = true
+            )
         }
     }
-    
+
     fun logout() {
         _userState.value = null
     }
