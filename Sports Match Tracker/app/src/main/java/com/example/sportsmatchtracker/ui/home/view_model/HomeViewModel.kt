@@ -8,10 +8,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sportsmatchtracker.App
 import com.example.sportsmatchtracker.model.match.Match
-import com.example.sportsmatchtracker.model.user.User
-import com.example.sportsmatchtracker.repository.Home.HomeRepository
-import com.example.sportsmatchtracker.repository.auth.AuthRepository
-import com.example.sportsmatchtracker.ui.auth.view_model.AuthViewModel
+import com.example.sportsmatchtracker.repository.home.HomeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

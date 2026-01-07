@@ -16,13 +16,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.sportsmatchtracker.ui.auth.view.AuthScreen
 import com.example.sportsmatchtracker.ui.auth.view_model.AuthViewModel
+import com.example.sportsmatchtracker.ui.components.BottomBar
 import com.example.sportsmatchtracker.ui.components.TopBar
+import com.example.sportsmatchtracker.ui.favourites.view.FavouritesScreen
 import com.example.sportsmatchtracker.ui.network.view.ConnectionScreen
 import com.example.sportsmatchtracker.ui.home.view.HomeScreen
 import com.example.sportsmatchtracker.ui.home.view_model.HomeViewModel
 import com.example.sportsmatchtracker.ui.network.view_model.ConnectionViewModel
 import com.example.sportsmatchtracker.ui.settings.view.SettingsScreen
 import com.example.sportsmatchtracker.ui.settings.view_model.SettingsViewModel
+import com.example.sportsmatchtracker.ui.tables.view.TablesScreen
+import com.example.sportsmatchtracker.ui.teams.view.TeamsScreen
 
 @Composable
 fun AppNavigation(
@@ -36,6 +40,12 @@ fun AppNavigation(
     val user by authViewModel.user.collectAsState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val mainRoutes = listOf(
+        Screen.Home.route,
+        Screen.Teams.route,
+        Screen.Favourites.route,
+        Screen.Tables.route
+    )
     var searchQuery by remember { mutableStateOf("") }
 
     // Handle navigation based on connection and authentication state
@@ -72,13 +82,11 @@ fun AppNavigation(
         searchQuery = ""
     }
 
-    val showTopBar = currentRoute in listOf(
-        Screen.Home.route,
-    )
+    val showBar = currentRoute in mainRoutes
 
     Scaffold(
         topBar = {
-            if (showTopBar) {
+            if (showBar) {
                 TopBar(
                     currentRoute = currentRoute,
                     searchQuery = searchQuery,
@@ -90,6 +98,27 @@ fun AppNavigation(
                         when (currentRoute) {
                             //Screen.Home.route -> homeViewModel.search(searchQuery)
                         }
+                    }
+                )
+            }
+        },
+        bottomBar = {
+            if (showBar) {
+                BottomBar(
+                    currentRoute = currentRoute,
+                    onNavigateToHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToTeams = {
+                        navController.navigate(Screen.Teams.route)
+                    },
+                    onNavigateToFavorites = {
+                        navController.navigate(Screen.Favourites.route)
+                    },
+                    onNavigateToTables = {
+                        navController.navigate(Screen.Tables.route)
                     }
                 )
             }
@@ -111,61 +140,38 @@ fun AppNavigation(
             composable(Screen.Home.route) {
                 user?.let {
                     HomeScreen(
-                        user = it,
                         viewModel = homeViewModel,
-//                        onNavigateToTeams = {
-//                            navController.navigate(Screen.Teams.route)
-//                        },
-//                        onNavigateToSettings = {
-//                            navController.navigate(Screen.Settings.route)
- //                      }
                    )
                 }
             }
 
-//            composable(Screen.Teams.route) {
-//                user?.let {
-//                    TeamsScreen(
-//                        onNavigateBack = {
-//                            navController.popBackStack()
-//                        }
-//                    )
-//                }
-//            }
+            composable(Screen.Teams.route) {
+                user?.let {
+                    TeamsScreen()
+                }
+            }
+
+            composable(Screen.Favourites.route) {
+                user?.let {
+                    FavouritesScreen()
+                }
+            }
+
+            composable(Screen.Tables.route) {
+                user?.let {
+                    TablesScreen()
+                }
+            }
 
             composable(Screen.Settings.route) {
                 user?.let {
                     SettingsScreen(
                         user = it,
                         viewModel = settingsViewModel
-                        //onNavigateBack = {
-                            //navController.popBackStack()
-                       // }
                     )
                 }
             }
         }
     }
 
-//    NavHost(
-//        navController = navController,
-//        startDestination = Screen.Connection.route
-//    ) {
-//        composable(Screen.Connection.route) {
-//            ConnectionScreen(viewModel = connectionViewModel)
-//        }
-//
-//        composable(Screen.Auth.route) {
-//            AuthScreen(viewModel = authViewModel)
-//        }
-//
-//        composable(Screen.Home.route) {
-//            user?.let {
-//                HomeScreen(
-//                    user = it,
-//                    viewModel = homeViewModel
-//                )
-//            }
-//        }
-//    }
 }

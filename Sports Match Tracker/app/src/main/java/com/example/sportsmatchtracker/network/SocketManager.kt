@@ -26,8 +26,8 @@ class SocketManager private constructor() {
             }
         }
     }
-
-    suspend fun connect(host: String = "172.30.0.236", port: Int = 1100): Boolean {
+                                        //172.30.0.236
+    suspend fun connect(host: String = "172.26.0.3", port: Int = 1100): Boolean {
         return try {
             withTimeout(3000) {
                 withContext(Dispatchers.IO) {

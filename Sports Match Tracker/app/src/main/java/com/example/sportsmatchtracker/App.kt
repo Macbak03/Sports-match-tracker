@@ -1,7 +1,7 @@
 package com.example.sportsmatchtracker
 
 import android.app.Application
-import com.example.sportsmatchtracker.repository.Home.HomeRepository
+import com.example.sportsmatchtracker.repository.home.HomeRepository
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.repository.client.ClientRepository
 

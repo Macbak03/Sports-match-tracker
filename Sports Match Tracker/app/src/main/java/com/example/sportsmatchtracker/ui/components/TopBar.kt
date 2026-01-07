@@ -2,6 +2,7 @@ package com.example.sportsmatchtracker.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,7 +17,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.sportsmatchtracker.ui.teams.view.TeamsScreen
+import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,7 +36,8 @@ fun TopBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp),
+                    .height(64.dp)
+                    .padding(end = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 DockedSearchBar(
@@ -62,15 +67,15 @@ fun TopBar(
                     },
                     expanded = false,
                     onExpandedChange = { },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 20.dp)
+                    modifier = Modifier.weight(1f)
                 ) { }
+
+                Spacer(modifier = Modifier.size(12.dp))
+
                 IconButton(
                     onClick = onNavigateToSettings,
                     modifier = Modifier
-                        .size(40.dp)
-                        .padding(end = 14.dp)
+                        .size(50.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary)
                 ) {
@@ -89,7 +94,16 @@ private fun getSearchPlaceholder(route: String?): String {
     return when (route) {
         "home" -> "Search matches..."
         "teams" -> "Search teams..."
-        "settings" -> "Search settings..."
+        "favourites" -> "Search favourites..."
+        "tables" -> "Search tables..."
         else -> "Search..."
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun TeamsPreview() {
+    SportsMatchTrackerTheme {
+        TopBar(currentRoute = "home", searchQuery = "", onSearchQueryChange = {}, onNavigateToSettings = {}, onSearch = {})
     }
 }
