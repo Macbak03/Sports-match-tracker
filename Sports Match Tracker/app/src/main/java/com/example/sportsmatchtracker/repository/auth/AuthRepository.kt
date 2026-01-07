@@ -4,6 +4,7 @@ import com.example.sportsmatchtracker.model.auth.AuthError
 import com.example.sportsmatchtracker.model.user.User
 import com.example.sportsmatchtracker.model.where.WhereCondition
 import com.example.sportsmatchtracker.network.SocketManager
+import com.example.sportsmatchtracker.repository.DatabaseSchema
 import com.example.sportsmatchtracker.repository.Repository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,18 +15,18 @@ import org.json.JSONObject
 class AuthRepository : Repository() {
     private val _userState = MutableStateFlow<User?>(null)
     val userState: StateFlow<User?> = _userState.asStateFlow()
-    val table = "uzytkownik"
+    private val table = DatabaseSchema.Users
 
     private fun parseServerError(message: String): AuthError {
         return when {
-            message.contains("UNIQUE constraint failed: ${table}.email", ignoreCase = true) -> {
+            message.contains("UNIQUE constraint failed: ${table.TABLE_NAME}.${table.EMAIL}", ignoreCase = true) -> {
                 AuthError(
                     errorMessage = "This email is already registered",
                     emailError = true
                 )
             }
 
-            message.contains("UNIQUE constraint failed: ${table}.nick", ignoreCase = true) -> {
+            message.contains("UNIQUE constraint failed: ${table.TABLE_NAME}.${table.NICK}", ignoreCase = true) -> {
                 AuthError(
                     errorMessage = "This nick is already taken",
                     nickError = true
@@ -56,35 +57,6 @@ class AuthRepository : Repository() {
         }
     }
 
-//    private fun formLoginRequest(email: String, password: String): JSONObject {
-//        return JSONObject().apply {
-//            put("action", "SELECT")
-//            put("table", "uzytkownik")
-//            put("columns", JSONArray(listOf("email", "nick")))
-//            put("where", JSONArray().apply {
-//                put(JSONObject().apply {
-//                    put("column", "email")
-//                    put("operator", "=")
-//                    put("value", email)
-//                })
-//                put(JSONObject().apply {
-//                    put("column", "haslo")
-//                    put("operator", "=")
-//                    put("value", password)
-//                })
-//            })
-//        }
-//    }
-//
-//    private fun fromRegisterRequest(email: String, nick: String, password: String): JSONObject {
-//        return JSONObject().apply {
-//            put("action", "INSERT")
-//            put("table", "uzytkownik")
-//            put("columns", JSONArray(listOf("email", "nick", "haslo")))
-//            put("values", JSONArray(listOf(email, nick, password)))
-//        }
-//    }
-
     suspend fun login(email: String, password: String) {
         if (!socketManager.isConnected) {
             throw AuthError(errorMessage = "No connection to server", generalError = true)
@@ -98,11 +70,11 @@ class AuthRepository : Repository() {
         }
 
         val request = selectRequest(
-            table,
-            listOf("email", "nick"),
+            table.TABLE_NAME,
+            listOf(table.EMAIL, table.NICK),
             listOf(
-                WhereCondition("email", "=", email),
-                WhereCondition("haslo", "=", password)
+                WhereCondition(table.EMAIL, "=", email),
+                WhereCondition(table.PASSWORD, "=", password)
             )
         )
         val response = socketManager.sendRequestWithResponse(request) ?: throw AuthError(
@@ -121,8 +93,8 @@ class AuthRepository : Repository() {
                 if (count > 0) {
                     val userJson = data.getJSONObject(0)
                     val user = User(
-                        nick = userJson.getString("nick"),
-                        email = userJson.getString("email")
+                        nick = userJson.getString(table.NICK),
+                        email = userJson.getString(table.EMAIL)
                     )
                     _userState.value = user
 
@@ -166,8 +138,8 @@ class AuthRepository : Repository() {
         }
 
         val request = insertRequest(
-            table = "uzytkownik",
-            columns = listOf("email", "nick", "haslo"),
+            table = table.TABLE_NAME,
+            columns = listOf(table.EMAIL, table.NICK, table.PASSWORD),
             values = listOf(email, nick, password)
         )
         val response = socketManager.sendRequestWithResponse(request) ?: throw AuthError(
