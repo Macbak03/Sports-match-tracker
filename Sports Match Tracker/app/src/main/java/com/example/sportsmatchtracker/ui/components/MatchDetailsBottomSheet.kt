@@ -16,6 +16,7 @@ import com.example.sportsmatchtracker.model.match.MatchEvent
 import com.example.sportsmatchtracker.model.match.MatchStatus
 import com.example.sportsmatchtracker.ui.tables.view.TablesScreen
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
+import java.time.LocalDateTime
 import kotlin.collections.component1
 import kotlin.collections.component2
 
@@ -143,19 +144,17 @@ private fun ScheduledMatchContent(match: Match) {
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
             Text(
-                text = match.date,
+                text = match.formattedDate,
                 style = MaterialTheme.typography.titleMedium,
                 color = Color.Gray,
                 textAlign = TextAlign.Center
             )
-            match.gameTime?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray,
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                text = match.formattedTime,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
         }
         
         Text(
@@ -250,17 +249,15 @@ private fun MatchEvents(events: List<MatchEvent>) {
 fun FavouritesPreview() {
     SportsMatchTrackerTheme {
         MatchDetailsBottomSheet(match = Match(
-            status = MatchStatus.LIVE,
             homeTeam = "Manchester United",
             awayTeam = "Liverpool",
             homeScore = 1,
             awayScore = 3,
-            date = "10-02-2025",
-            gameTime = "90+3\'",
+            matchDateTime = LocalDateTime.now().minusMinutes(45),
             league = "Premier League",
             events = listOf(
-                MatchEvent("70\'", "Red card for Liverpool"),
-                MatchEvent("90\'", "Goal for Manchester United")
+                MatchEvent("35\'", "Red card for Liverpool"),
+                MatchEvent("40\'", "Goal for Manchester United")
             )
         ) , onDismiss = {})
 

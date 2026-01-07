@@ -41,7 +41,7 @@ fun MatchListItem(
                 color = if (match.status == MatchStatus.LIVE) Color.Red else Color.Gray
             )
             Text(
-                text = match.date,
+                text = match.formattedDate,
                 modifier = Modifier.width(90.dp),
                 color = Color.Black,
                 style = MaterialTheme.typography.bodyMedium

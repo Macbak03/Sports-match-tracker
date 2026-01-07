@@ -7,64 +7,64 @@ import com.example.sportsmatchtracker.repository.Repository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.time.LocalDateTime
 
 class HomeRepository : Repository() {
     private val _matchesState = MutableStateFlow<List<Match>>(emptyList())
     val matchesState: StateFlow<List<Match>> = _matchesState.asStateFlow()
 
     init {
+        val now = LocalDateTime.now()
+        
         _matchesState.value = listOf(
+            // LIVE matches (started less than 90 minutes ago)
             Match(
-                status = MatchStatus.LIVE,
                 homeTeam = "Real Madrid",
                 awayTeam = "Barcelona",
                 homeScore = 2,
                 awayScore = 1,
-                date = "10-02-2025",
-                gameTime = "81\'",
+                matchDateTime = now.minusMinutes(81),
                 league = "La Liga",
                 events = listOf(
-                    MatchEvent("80\'", "Goal for Real Madrid")
+                    MatchEvent("80'", "Goal for Real Madrid")
                 )
             ),
             Match(
-                status = MatchStatus.LIVE,
                 homeTeam = "Manchester United",
                 awayTeam = "Liverpool",
                 homeScore = 1,
                 awayScore = 3,
-                date = "10-02-2025",
-                gameTime = "90+3\'",
+                matchDateTime = now.minusMinutes(45),
                 league = "Premier League",
                 events = listOf(
-                    MatchEvent("70\'", "Red card for Liverpool"),
-                    MatchEvent("90\'", "Goal for Manchester United")
+                    MatchEvent("70'", "Red card for Liverpool"),
+                    MatchEvent("90'", "Goal for Manchester United")
                 )
             ),
+            // SCHEDULED matches (future)
             Match(
-                status = MatchStatus.SCHEDULED,
                 homeTeam = "Bayern Munich",
                 awayTeam = "Borussia Dortmund",
-                homeScore = 4,
-                awayScore = 2,
-                date = "12-02-2025",
+                homeScore = 0,
+                awayScore = 0,
+                matchDateTime = now.plusDays(2).withHour(20).withMinute(0),
                 league = "Bundesliga"
             ),
             Match(
-                status = MatchStatus.SCHEDULED,
                 homeTeam = "Juventus",
                 awayTeam = "AC Milan",
-                homeScore = 2,
-                awayScore = 2,
-                date = "13-02-2025",
+                homeScore = 0,
+                awayScore = 0,
+                matchDateTime = now.plusDays(3).withHour(18).withMinute(30),
                 league = "Serie A"
             ),
+            // FINISHED matches (started more than 90 minutes ago)
             Match(
                 homeTeam = "PSG",
                 awayTeam = "Lyon",
                 homeScore = 3,
                 awayScore = 0,
-                date = "14-02-2025",
+                matchDateTime = now.minusHours(3),
                 league = "Ligue 1"
             ),
             Match(
@@ -72,7 +72,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Arsenal",
                 homeScore = 1,
                 awayScore = 1,
-                date = "15-02-2025",
+                matchDateTime = now.minusDays(1).withHour(15).withMinute(0),
                 league = "Premier League"
             ),
             Match(
@@ -80,7 +80,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Sevilla",
                 homeScore = 2,
                 awayScore = 0,
-                date = "16-02-2025",
+                matchDateTime = now.minusDays(2).withHour(21).withMinute(0),
                 league = "La Liga"
             ),
             Match(
@@ -88,7 +88,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Inter",
                 homeScore = 0,
                 awayScore = 2,
-                date = "17-02-2025",
+                matchDateTime = now.minusDays(3).withHour(19).withMinute(45),
                 league = "Serie A"
             ),
             Match(
@@ -96,7 +96,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Bayer Leverkusen",
                 homeScore = 3,
                 awayScore = 1,
-                date = "18-02-2025",
+                matchDateTime = now.minusDays(4).withHour(17).withMinute(30),
                 league = "Bundesliga"
             ),
             Match(
@@ -104,7 +104,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Monaco",
                 homeScore = 2,
                 awayScore = 2,
-                date = "19-02-2025",
+                matchDateTime = now.minusDays(5).withHour(20).withMinute(0),
                 league = "Ligue 1"
             ),
             Match(
@@ -112,7 +112,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Manchester City",
                 homeScore = 1,
                 awayScore = 4,
-                date = "20-02-2025",
+                matchDateTime = now.minusDays(6).withHour(16).withMinute(0),
                 league = "Premier League"
             ),
             Match(
@@ -120,7 +120,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Real Sociedad",
                 homeScore = 3,
                 awayScore = 2,
-                date = "21-02-2025",
+                matchDateTime = now.minusDays(7).withHour(22).withMinute(0),
                 league = "La Liga"
             ),
             Match(
@@ -128,7 +128,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Lazio",
                 homeScore = 2,
                 awayScore = 3,
-                date = "22-02-2025",
+                matchDateTime = now.minusDays(8).withHour(18).withMinute(0),
                 league = "Serie A"
             ),
             Match(
@@ -136,7 +136,7 @@ class HomeRepository : Repository() {
                 awayTeam = "VfB Stuttgart",
                 homeScore = 1,
                 awayScore = 1,
-                date = "23-02-2025",
+                matchDateTime = now.minusDays(9).withHour(15).withMinute(30),
                 league = "Bundesliga"
             ),
             Match(
@@ -144,7 +144,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Rennes",
                 homeScore = 0,
                 awayScore = 1,
-                date = "24-02-2025",
+                matchDateTime = now.minusDays(10).withHour(19).withMinute(0),
                 league = "Ligue 1"
             ),
             Match(
@@ -152,7 +152,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Leicester",
                 homeScore = 2,
                 awayScore = 0,
-                date = "25-02-2025",
+                matchDateTime = now.minusDays(11).withHour(14).withMinute(0),
                 league = "Premier League"
             ),
             Match(
@@ -160,7 +160,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Real Betis",
                 homeScore = 1,
                 awayScore = 2,
-                date = "26-02-2025",
+                matchDateTime = now.minusDays(12).withHour(21).withMinute(30),
                 league = "La Liga"
             ),
             Match(
@@ -168,7 +168,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Torino",
                 homeScore = 3,
                 awayScore = 1,
-                date = "27-02-2025",
+                matchDateTime = now.minusDays(13).withHour(17).withMinute(0),
                 league = "Serie A"
             ),
             Match(
@@ -176,7 +176,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Eintracht Frankfurt",
                 homeScore = 0,
                 awayScore = 2,
-                date = "28-02-2025",
+                matchDateTime = now.minusDays(14).withHour(16).withMinute(30),
                 league = "Bundesliga"
             ),
             Match(
@@ -184,7 +184,7 @@ class HomeRepository : Repository() {
                 awayTeam = "Strasbourg",
                 homeScore = 1,
                 awayScore = 1,
-                date = "01-03-2025",
+                matchDateTime = now.minusDays(15).withHour(20).withMinute(45),
                 league = "Ligue 1"
             )
         )
