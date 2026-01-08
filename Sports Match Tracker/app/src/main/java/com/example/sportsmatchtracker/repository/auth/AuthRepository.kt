@@ -2,14 +2,12 @@ package com.example.sportsmatchtracker.repository.auth
 
 import com.example.sportsmatchtracker.model.auth.AuthError
 import com.example.sportsmatchtracker.model.user.User
-import com.example.sportsmatchtracker.model.where.WhereCondition
-import com.example.sportsmatchtracker.network.SocketManager
+import com.example.sportsmatchtracker.model.database.WhereCondition
 import com.example.sportsmatchtracker.repository.DatabaseSchema
 import com.example.sportsmatchtracker.repository.Repository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.json.JSONArray
 import org.json.JSONObject
 
 class AuthRepository : Repository() {

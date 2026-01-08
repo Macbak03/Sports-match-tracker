@@ -13,6 +13,7 @@ import com.example.sportsmatchtracker.ui.auth.view_model.AuthViewModel
 import com.example.sportsmatchtracker.ui.home.view_model.HomeViewModel
 import com.example.sportsmatchtracker.ui.network.view_model.ConnectionViewModel
 import com.example.sportsmatchtracker.ui.settings.view_model.SettingsViewModel
+import com.example.sportsmatchtracker.ui.teams.view_model.TeamsViewModel
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,6 +21,7 @@ class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels { AuthViewModel.Factory }
     private val homeViewModel: HomeViewModel by viewModels { HomeViewModel.Factory }
     private val settingsViewModel: SettingsViewModel by viewModels { SettingsViewModel.Factory }
+    private val teamsViewModel: TeamsViewModel by viewModels { TeamsViewModel.Factory }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +33,7 @@ class MainActivity : ComponentActivity() {
                     authViewModel = authViewModel,
                     homeViewModel = homeViewModel,
                     settingsViewModel = settingsViewModel,
+                    teamsViewModel = teamsViewModel
                 )
             }
         }

@@ -107,8 +107,6 @@ object DatabaseSchema {
         const val TABLE_SEASON_LEAGUE_NAME = "table_season_league_name"
         const val TABLE_SEASON_LEAGUE_COUNTRY = "table_season_league_country"
         const val TEAM_NAME = "team_name"
-        const val TEAM_CITY = "team_city"
-        const val TEAM_SPORTS_NAME = "team_sports_name"
         const val DRAWS = "draws"
         const val LOSSES = "losses"
         const val WINS = "wins"

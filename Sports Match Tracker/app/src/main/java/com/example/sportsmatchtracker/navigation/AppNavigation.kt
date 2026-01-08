@@ -27,6 +27,7 @@ import com.example.sportsmatchtracker.ui.settings.view.SettingsScreen
 import com.example.sportsmatchtracker.ui.settings.view_model.SettingsViewModel
 import com.example.sportsmatchtracker.ui.tables.view.TablesScreen
 import com.example.sportsmatchtracker.ui.teams.view.TeamsScreen
+import com.example.sportsmatchtracker.ui.teams.view_model.TeamsViewModel
 
 @Composable
 fun AppNavigation(
@@ -34,6 +35,7 @@ fun AppNavigation(
     authViewModel: AuthViewModel,
     homeViewModel: HomeViewModel,
     settingsViewModel: SettingsViewModel,
+    teamsViewModel: TeamsViewModel
 ) {
     val navController = rememberNavController()
     val clientState by connectionViewModel.uiState.collectAsState()
@@ -147,7 +149,9 @@ fun AppNavigation(
 
             composable(Screen.Teams.route) {
                 user?.let {
-                    TeamsScreen()
+                    TeamsScreen(
+                        viewModel = teamsViewModel
+                    )
                 }
             }
 

@@ -1,6 +1,8 @@
 -- Sports Match Tracker Database Schema
 -- SQLite initialization script
 
+PRAGMA foreign_keys = ON;
+
 -- Role table (tworzymy najpierw, bo uzytkownik od niej zależy)
 CREATE TABLE IF NOT EXISTS roles (
     name TEXT PRIMARY KEY CHECK(name IN ('user', 'admin'))
@@ -29,7 +31,7 @@ CREATE TABLE IF NOT EXISTS buildings (
     street TEXT NOT NULL,
     number INTEGER NOT NULL,
     city TEXT NOT NULL,
-    FOREIGN KEY (street, number, city) REFERENCES adress(street, number, city) ON UPDATE CASCADE
+    FOREIGN KEY (street, number, city) REFERENCES adresses(street, number, city) ON UPDATE CASCADE
 );
 
 -- Sport table
@@ -41,8 +43,8 @@ CREATE TABLE IF NOT EXISTS sports (
 CREATE TABLE IF NOT EXISTS leagues (
     name TEXT,
     country TEXT,
-    sports_name TEXT,
-    PRIMARY KEY (name, country, sports_name),
+    sports_name TEXT NOT NULL,
+    PRIMARY KEY (name, country),
     FOREIGN KEY (sports_name) REFERENCES sports(name) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -74,10 +76,11 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 CREATE TABLE IF NOT EXISTS seasons (
     date_start DATE,
     date_end DATE,
-    league_name TEXT,
-    league_country TEXT,
+    league_name TEXT NOT NULL,
+    league_country TEXT NOT NULL,
     PRIMARY KEY (date_start, date_end, league_name, league_country),
-    FOREIGN KEY (league_name, league_country) REFERENCES leagues(name, country) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (league_name, league_country) REFERENCES leagues(name, country) ON DELETE CASCADE ON UPDATE CASCADE,
+    CHECK(date_start < date_end)
 );
 
 -- Match table
@@ -132,18 +135,15 @@ CREATE TABLE IF NOT EXISTS positions_in_table (
     table_season_league_name TEXT,
     table_season_league_country TEXT,
     team_name TEXT,
-    team_city TEXT,
-    team_sports_name TEXT,
     draws INTEGER DEFAULT 0,
     losses INTEGER DEFAULT 0,
     wins INTEGER DEFAULT 0,
     matches_played INTEGER DEFAULT 0,
     points INTEGER DEFAULT 0,
-    PRIMARY KEY (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, team_city, team_sports_name),
+    PRIMARY KEY (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name),
     FOREIGN KEY (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country) 
         REFERENCES tables(season_start_date, season_end_date, season_league_name, season_league_country) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (team_name, team_city, team_sports_name) 
-        REFERENCES teams(name, city, sports_name) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (team_name) REFERENCES teams(name) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- Sample data for testing
@@ -245,16 +245,16 @@ INSERT OR IGNORE INTO teams (name, city, league_name, league_country) VALUES
     ('Real Madrid Basketball', 'Madrid', 'EuroLeague', 'Europe'),
     ('Barcelona Basketball', 'Barcelona', 'EuroLeague', 'Europe'),
     ('Olympiacos', 'Athens', 'EuroLeague', 'Europe'),
-    -- PlusLiga
-    ('ZAKSA Kędzierzyn-Koźle', 'Kędzierzyn-Koźle', 'Siatkówka', 'Poland'),
-    ('Jastrzębski Węgiel', 'Jastrzębie-Zdrój', 'Siatkówka', 'Poland'),
-    ('Projekt Warszawa', 'Warsaw', 'Siatkówka', 'Poland'),
-    ('Trefl Gdańsk', 'Gdańsk', 'Siatkówka', 'Poland'),
-    ('Asseco Resovia', 'Rzeszów', 'Siatkówka', 'Poland'),
+    -- PlusLiga - POPRAWIONE: zmieniono z 'Siatkówka' na 'PlusLiga'
+    ('ZAKSA Kędzierzyn-Koźle', 'Kędzierzyn-Koźle', 'PlusLiga', 'Poland'),
+    ('Jastrzębski Węgiel', 'Jastrzębie-Zdrój', 'PlusLiga', 'Poland'),
+    ('Projekt Warszawa', 'Warsaw', 'PlusLiga', 'Poland'),
+    ('Trefl Gdańsk', 'Gdańsk', 'PlusLiga', 'Poland'),
+    ('Asseco Resovia', 'Rzeszów', 'PlusLiga', 'Poland'),
     -- Serie A
-    ('Perugia Volley', 'Perugia', 'Siatkówka', 'Italy'),
-    ('Lube Civitanova', 'Civitanova', 'Siatkówka', 'Italy'),
-    ('Modena Volley', 'Modena', 'Siatkówka', 'Italy');
+    ('Perugia Volley', 'Perugia', 'Serie A', 'Italy'),
+    ('Lube Civitanova', 'Civitanova', 'Serie A', 'Italy'),
+    ('Modena Volley', 'Modena', 'Serie A', 'Italy');
 
 -- Sample seasons (zakończone i trwające)
 INSERT OR IGNORE INTO seasons (date_start, date_end, league_name, league_country) VALUES 
@@ -379,67 +379,67 @@ INSERT OR IGNORE INTO match_events (game_time, event, match_start_date, match_se
     (67, 'Gol - Lech Poznań (Ishak)', '2024-07-21 18:00:00', '2024-07-20', '2025-05-15', 'Ekstraklasa', 'Poland'),
     (82, 'Gol - Legia Warszawa (Pekhart)', '2024-07-21 18:00:00', '2024-07-20', '2025-05-15', 'Ekstraklasa', 'Poland');
 
--- Sample positions in table - Premier League 2024/2025 (zakończony sezon)
-INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, team_city, team_sports_name, draws, losses, wins, matches_played, points) VALUES 
-    ('2024-08-15', '2025-05-25', 'Premier League', 'England', 'Arsenal', 'London', 'Piłka nożna', 8, 4, 26, 38, 86),
-    ('2024-08-15', '2025-05-25', 'Premier League', 'England', 'Manchester City', 'Manchester', 'Piłka nożna', 6, 5, 27, 38, 87),
-    ('2024-08-15', '2025-05-25', 'Premier League', 'England', 'Liverpool', 'Liverpool', 'Piłka nożna', 10, 6, 22, 38, 76),
-    ('2024-08-15', '2025-05-25', 'Premier League', 'England', 'Manchester United', 'Manchester', 'Piłka nożna', 7, 12, 19, 38, 64),
-    ('2024-08-15', '2025-05-25', 'Premier League', 'England', 'Chelsea', 'London', 'Piłka nożna', 9, 13, 16, 38, 57),
-    ('2024-08-15', '2025-05-25', 'Premier League', 'England', 'Tottenham', 'London', 'Piłka nożna', 8, 14, 16, 38, 56);
+-- Sample positions in table - Premier League 2024/2025 (zakończony sezon) - POPRAWIONE: usunięto team_city i team_sports_name
+INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, draws, losses, wins, matches_played, points) VALUES 
+    ('2024-08-15', '2025-05-25', 'Premier League', 'England', 'Arsenal', 8, 4, 26, 38, 86),
+    ('2024-08-15', '2025-05-25', 'Premier League', 'England', 'Manchester City', 6, 5, 27, 38, 87),
+    ('2024-08-15', '2025-05-25', 'Premier League', 'England', 'Liverpool', 10, 6, 22, 38, 76),
+    ('2024-08-15', '2025-05-25', 'Premier League', 'England', 'Manchester United', 7, 12, 19, 38, 64),
+    ('2024-08-15', '2025-05-25', 'Premier League', 'England', 'Chelsea', 9, 13, 16, 38, 57),
+    ('2024-08-15', '2025-05-25', 'Premier League', 'England', 'Tottenham', 8, 14, 16, 38, 56);
 
 -- Sample positions in table - Premier League 2025/2026 (trwający sezon)
-INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, team_city, team_sports_name, draws, losses, wins, matches_played, points) VALUES 
-    ('2025-08-16', '2026-05-24', 'Premier League', 'England', 'Arsenal', 'London', 'Piłka nożna', 2, 1, 12, 15, 38),
-    ('2025-08-16', '2026-05-24', 'Premier League', 'England', 'Manchester City', 'Manchester', 'Piłka nożna', 3, 2, 10, 15, 33),
-    ('2025-08-16', '2026-05-24', 'Premier League', 'England', 'Liverpool', 'Liverpool', 'Piłka nożna', 4, 3, 8, 15, 28),
-    ('2025-08-16', '2026-05-24', 'Premier League', 'England', 'Manchester United', 'Manchester', 'Piłka nożna', 3, 5, 7, 15, 24),
-    ('2025-08-16', '2026-05-24', 'Premier League', 'England', 'Chelsea', 'London', 'Piłka nożna', 5, 4, 6, 15, 23),
-    ('2025-08-16', '2026-05-24', 'Premier League', 'England', 'Tottenham', 'London', 'Piłka nożna', 2, 7, 6, 15, 20);
+INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, draws, losses, wins, matches_played, points) VALUES 
+    ('2025-08-16', '2026-05-24', 'Premier League', 'England', 'Arsenal', 2, 1, 12, 15, 38),
+    ('2025-08-16', '2026-05-24', 'Premier League', 'England', 'Manchester City', 3, 2, 10, 15, 33),
+    ('2025-08-16', '2026-05-24', 'Premier League', 'England', 'Liverpool', 4, 3, 8, 15, 28),
+    ('2025-08-16', '2026-05-24', 'Premier League', 'England', 'Manchester United', 3, 5, 7, 15, 24),
+    ('2025-08-16', '2026-05-24', 'Premier League', 'England', 'Chelsea', 5, 4, 6, 15, 23),
+    ('2025-08-16', '2026-05-24', 'Premier League', 'England', 'Tottenham', 2, 7, 6, 15, 20);
 
 -- Sample positions in table - Ekstraklasa 2024/2025 (zakończony sezon)
-INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, team_city, team_sports_name, draws, losses, wins, matches_played, points) VALUES 
-    ('2024-07-20', '2025-05-15', 'Ekstraklasa', 'Poland', 'Legia Warszawa', 'Warsaw', 'Piłka nożna', 5, 3, 22, 30, 71),
-    ('2024-07-20', '2025-05-15', 'Ekstraklasa', 'Poland', 'Lech Poznań', 'Poznań', 'Piłka nożna', 6, 4, 20, 30, 66),
-    ('2024-07-20', '2025-05-15', 'Ekstraklasa', 'Poland', 'Wisła Kraków', 'Kraków', 'Piłka nożna', 8, 10, 12, 30, 44),
-    ('2024-07-20', '2025-05-15', 'Ekstraklasa', 'Poland', 'Pogoń Szczecin', 'Szczecin', 'Piłka nożna', 7, 11, 12, 30, 43);
+INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, draws, losses, wins, matches_played, points) VALUES 
+    ('2024-07-20', '2025-05-15', 'Ekstraklasa', 'Poland', 'Legia Warszawa', 5, 3, 22, 30, 71),
+    ('2024-07-20', '2025-05-15', 'Ekstraklasa', 'Poland', 'Lech Poznań', 6, 4, 20, 30, 66),
+    ('2024-07-20', '2025-05-15', 'Ekstraklasa', 'Poland', 'Wisła Kraków', 8, 10, 12, 30, 44),
+    ('2024-07-20', '2025-05-15', 'Ekstraklasa', 'Poland', 'Pogoń Szczecin', 7, 11, 12, 30, 43);
 
 -- Sample positions in table - Ekstraklasa 2025/2026 (trwający sezon)
-INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, team_city, team_sports_name, draws, losses, wins, matches_played, points) VALUES 
-    ('2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'Legia Warszawa', 'Warsaw', 'Piłka nożna', 2, 1, 9, 12, 29),
-    ('2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'Lech Poznań', 'Poznań', 'Piłka nożna', 3, 2, 7, 12, 24),
-    ('2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'Wisła Kraków', 'Kraków', 'Piłka nożna', 4, 4, 4, 12, 16),
-    ('2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'Pogoń Szczecin', 'Szczecin', 'Piłka nożna', 3, 5, 4, 12, 15);
+INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, draws, losses, wins, matches_played, points) VALUES 
+    ('2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'Legia Warszawa', 2, 1, 9, 12, 29),
+    ('2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'Lech Poznań', 3, 2, 7, 12, 24),
+    ('2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'Wisła Kraków', 4, 4, 4, 12, 16),
+    ('2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'Pogoń Szczecin', 3, 5, 4, 12, 15);
 
 -- Sample positions in table - NBA 2024/2025 (zakończony sezon)
-INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, team_city, team_sports_name, draws, losses, wins, matches_played, points) VALUES 
-    ('2024-10-22', '2025-04-13', 'NBA', 'USA', 'Celtics', 'Boston', 'Koszykówka', 0, 18, 64, 82, 128),
-    ('2024-10-22', '2025-04-13', 'NBA', 'USA', 'Lakers', 'Los Angeles', 'Koszykówka', 0, 29, 53, 82, 106),
-    ('2024-10-22', '2025-04-13', 'NBA', 'USA', 'Warriors', 'San Francisco', 'Koszykówka', 0, 36, 46, 82, 92),
-    ('2024-10-22', '2025-04-13', 'NBA', 'USA', 'Bulls', 'Chicago', 'Koszykówka', 0, 43, 39, 82, 78),
-    ('2024-10-22', '2025-04-13', 'NBA', 'USA', 'Knicks', 'New York', 'Koszykówka', 0, 32, 50, 82, 100);
+INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, draws, losses, wins, matches_played, points) VALUES 
+    ('2024-10-22', '2025-04-13', 'NBA', 'USA', 'Celtics', 0, 18, 64, 82, 128),
+    ('2024-10-22', '2025-04-13', 'NBA', 'USA', 'Lakers', 0, 29, 53, 82, 106),
+    ('2024-10-22', '2025-04-13', 'NBA', 'USA', 'Warriors', 0, 36, 46, 82, 92),
+    ('2024-10-22', '2025-04-13', 'NBA', 'USA', 'Bulls', 0, 43, 39, 82, 78),
+    ('2024-10-22', '2025-04-13', 'NBA', 'USA', 'Knicks', 0, 32, 50, 82, 100);
 
 -- Sample positions in table - NBA 2025/2026 (trwający sezon)
-INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, team_city, team_sports_name, draws, losses, wins, matches_played, points) VALUES 
-    ('2025-10-20', '2026-04-15', 'NBA', 'USA', 'Celtics', 'Boston', 'Koszykówka', 0, 8, 22, 30, 44),
-    ('2025-10-20', '2026-04-15', 'NBA', 'USA', 'Lakers', 'Los Angeles', 'Koszykówka', 0, 10, 20, 30, 40),
-    ('2025-10-20', '2026-04-15', 'NBA', 'USA', 'Warriors', 'San Francisco', 'Koszykówka', 0, 14, 16, 30, 32),
-    ('2025-10-20', '2026-04-15', 'NBA', 'USA', 'Bulls', 'Chicago', 'Koszykówka', 0, 17, 13, 30, 26),
-    ('2025-10-20', '2026-04-15', 'NBA', 'USA', 'Knicks', 'New York', 'Koszykówka', 0, 12, 18, 30, 36);
+INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, draws, losses, wins, matches_played, points) VALUES 
+    ('2025-10-20', '2026-04-15', 'NBA', 'USA', 'Celtics', 0, 8, 22, 30, 44),
+    ('2025-10-20', '2026-04-15', 'NBA', 'USA', 'Lakers', 0, 10, 20, 30, 40),
+    ('2025-10-20', '2026-04-15', 'NBA', 'USA', 'Warriors', 0, 14, 16, 30, 32),
+    ('2025-10-20', '2026-04-15', 'NBA', 'USA', 'Bulls', 0, 17, 13, 30, 26),
+    ('2025-10-20', '2026-04-15', 'NBA', 'USA', 'Knicks', 0, 12, 18, 30, 36);
 
 -- Sample positions in table - PlusLiga 2024/2025 (zakończony sezon)
-INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, team_city, team_sports_name, draws, losses, wins, matches_played, points) VALUES 
-    ('2024-09-20', '2025-04-30', 'PlusLiga', 'Poland', 'ZAKSA Kędzierzyn-Koźle', 'Kędzierzyn-Koźle', 'Siatkówka', 0, 6, 24, 30, 72),
-    ('2024-09-20', '2025-04-30', 'PlusLiga', 'Poland', 'Jastrzębski Węgiel', 'Jastrzębie-Zdrój', 'Siatkówka', 0, 8, 22, 30, 66),
-    ('2024-09-20', '2025-04-30', 'PlusLiga', 'Poland', 'Projekt Warszawa', 'Warsaw', 'Siatkówka', 0, 10, 20, 30, 60),
-    ('2024-09-20', '2025-04-30', 'PlusLiga', 'Poland', 'Trefl Gdańsk', 'Gdańsk', 'Siatkówka', 0, 14, 16, 30, 48),
-    ('2024-09-20', '2025-04-30', 'PlusLiga', 'Poland', 'Asseco Resovia', 'Rzeszów', 'Siatkówka', 0, 18, 12, 30, 36);
+INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, draws, losses, wins, matches_played, points) VALUES 
+    ('2024-09-20', '2025-04-30', 'PlusLiga', 'Poland', 'ZAKSA Kędzierzyn-Koźle', 0, 6, 24, 30, 72),
+    ('2024-09-20', '2025-04-30', 'PlusLiga', 'Poland', 'Jastrzębski Węgiel', 0, 8, 22, 30, 66),
+    ('2024-09-20', '2025-04-30', 'PlusLiga', 'Poland', 'Projekt Warszawa', 0, 10, 20, 30, 60),
+    ('2024-09-20', '2025-04-30', 'PlusLiga', 'Poland', 'Trefl Gdańsk', 0, 14, 16, 30, 48),
+    ('2024-09-20', '2025-04-30', 'PlusLiga', 'Poland', 'Asseco Resovia', 0, 18, 12, 30, 36);
 
 -- Sample positions in table - PlusLiga 2025/2026 (trwający sezon)
-INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, team_city, team_sports_name, draws, losses, wins, matches_played, points) VALUES 
-    ('2025-09-19', '2026-04-29', 'PlusLiga', 'Poland', 'ZAKSA Kędzierzyn-Koźle', 'Kędzierzyn-Koźle', 'Siatkówka', 0, 2, 10, 12, 30),
-    ('2025-09-19', '2026-04-29', 'PlusLiga', 'Poland', 'Jastrzębski Węgiel', 'Jastrzębie-Zdrój', 'Siatkówka', 0, 3, 9, 12, 27),
-    ('2025-09-19', '2026-04-29', 'PlusLiga', 'Poland', 'Projekt Warszawa', 'Warsaw', 'Siatkówka', 0, 4, 8, 12, 24),
-    ('2025-09-19', '2026-04-29', 'PlusLiga', 'Poland', 'Trefl Gdańsk', 'Gdańsk', 'Siatkówka', 0, 6, 6, 12, 18),
-    ('2025-09-19', '2026-04-29', 'PlusLiga', 'Poland', 'Asseco Resovia', 'Rzeszów', 'Siatkówka', 0, 8, 4, 12, 12);
+INSERT OR IGNORE INTO positions_in_table (table_season_start_date, table_season_end_date, table_season_league_name, table_season_league_country, team_name, draws, losses, wins, matches_played, points) VALUES 
+    ('2025-09-19', '2026-04-29', 'PlusLiga', 'Poland', 'ZAKSA Kędzierzyn-Koźle', 0, 2, 10, 12, 30),
+    ('2025-09-19', '2026-04-29', 'PlusLiga', 'Poland', 'Jastrzębski Węgiel', 0, 3, 9, 12, 27),
+    ('2025-09-19', '2026-04-29', 'PlusLiga', 'Poland', 'Projekt Warszawa', 0, 4, 8, 12, 24),
+    ('2025-09-19', '2026-04-29', 'PlusLiga', 'Poland', 'Trefl Gdańsk', 0, 6, 6, 12, 18),
+    ('2025-09-19', '2026-04-29', 'PlusLiga', 'Poland', 'Asseco Resovia', 0, 8, 4, 12, 12);
 

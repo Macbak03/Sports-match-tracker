@@ -1,4 +1,4 @@
-package com.example.sportsmatchtracker.model.where
+package com.example.sportsmatchtracker.model.database
 
 data class WhereCondition(
     val column: String,

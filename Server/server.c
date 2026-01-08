@@ -23,7 +23,7 @@ sqlite3 *db = NULL;
 /* ===================== SELECT DYNAMIC ===================== */
 int executeDynamicSelect(cJSON *json, char *response)
 {
-    char sql[2048];
+    char sql[8192]; // Zwiększony rozmiar dla bezpieczeństwa
 
     cJSON *table = cJSON_GetObjectItem(json, "table");
     if (!cJSON_IsString(table))
@@ -33,7 +33,7 @@ int executeDynamicSelect(cJSON *json, char *response)
     }
 
     /* Columns */
-    char columns_str[512] = "*";
+    char columns_str[2048] = "*";
     cJSON *columns = cJSON_GetObjectItem(json, "columns");
     if (cJSON_IsArray(columns))
     {
@@ -51,8 +51,36 @@ int executeDynamicSelect(cJSON *json, char *response)
         }
     }
 
+    /* JOINs */
+    char joins_str[3072] = "";
+    cJSON *joins = cJSON_GetObjectItem(json, "joins");
+    if (cJSON_IsArray(joins))
+    {
+        int join_count = cJSON_GetArraySize(joins);
+        for (int i = 0; i < join_count; i++)
+        {
+            cJSON *join = cJSON_GetArrayItem(joins, i);
+            cJSON *join_table = cJSON_GetObjectItem(join, "table");
+            cJSON *join_type = cJSON_GetObjectItem(join, "type");
+            cJSON *on_left = cJSON_GetObjectItem(join, "on_left");
+            cJSON *on_right = cJSON_GetObjectItem(join, "on_right");
+
+            if (cJSON_IsString(join_table) && cJSON_IsString(join_type) &&
+                cJSON_IsString(on_left) && cJSON_IsString(on_right))
+            {
+                char join_clause[512];
+                sprintf(join_clause, " %s JOIN %s ON %s = %s",
+                        join_type->valuestring,
+                        join_table->valuestring,
+                        on_left->valuestring,
+                        on_right->valuestring);
+                strcat(joins_str, join_clause);
+            }
+        }
+    }
+
     /* WHERE */
-    char where_str[512] = "";
+    char where_str[2048] = "";
     cJSON *where = cJSON_GetObjectItem(json, "where");
     if (cJSON_IsObject(where))
     {
@@ -98,7 +126,8 @@ int executeDynamicSelect(cJSON *json, char *response)
         }
     }
 
-    sprintf(sql, "SELECT %s FROM %s%s", columns_str, table->valuestring, where_str);
+    snprintf(sql, sizeof(sql), "SELECT %s FROM %s%s%s",
+             columns_str, table->valuestring, joins_str, where_str);
     printf("Executing SQL: %s\n", sql);
 
     sqlite3_stmt *stmt;
@@ -150,7 +179,7 @@ int executeDynamicSelect(cJSON *json, char *response)
 /* ===================== INSERT DYNAMIC ===================== */
 int executeDynamicInsert(cJSON *json, char *response)
 {
-    char sql[2048];
+    char sql[4096]; // Zwiększony rozmiar
 
     cJSON *table = cJSON_GetObjectItem(json, "table");
     if (!cJSON_IsString(table))
@@ -185,7 +214,7 @@ int executeDynamicInsert(cJSON *json, char *response)
     }
 
     /* Build columns string */
-    char columns_str[512] = "";
+    char columns_str[1024] = "";
     for (int i = 0; i < col_count; i++)
     {
         cJSON *col = cJSON_GetArrayItem(columns, i);
@@ -198,7 +227,7 @@ int executeDynamicInsert(cJSON *json, char *response)
     }
 
     /* Build values string */
-    char values_str[512] = "";
+    char values_str[1024] = "";
     for (int i = 0; i < val_count; i++)
     {
         cJSON *val = cJSON_GetArrayItem(values, i);
@@ -212,8 +241,8 @@ int executeDynamicInsert(cJSON *json, char *response)
         }
     }
 
-    sprintf(sql, "INSERT INTO %s (%s) VALUES (%s)",
-            table->valuestring, columns_str, values_str);
+    snprintf(sql, sizeof(sql), "INSERT INTO %s (%s) VALUES (%s)",
+             table->valuestring, columns_str, values_str);
     printf("Executing SQL: %s\n", sql);
 
     char *errMsg = NULL;
@@ -309,8 +338,8 @@ void *socketThread(void *arg)
         char *connected = "connected\n";
         send(sock, connected, strlen(connected), 0);
     }
-    char buffer[2048];
-    char response[2048];
+    char buffer[8192];   // Zwiększony dla większych zapytań
+    char response[8192]; // Zwiększony dla większych odpowiedzi
 
     while (1)
     {
