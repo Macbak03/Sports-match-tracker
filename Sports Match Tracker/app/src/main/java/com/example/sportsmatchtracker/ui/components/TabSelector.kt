@@ -8,12 +8,12 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun <T> TabSelector(
-    tabs: List<TabItem<T>>,
+    tabs: List<TabItem<T?>>,
     selectedTab: T,
-    onTabSelected: (T) -> Unit,
+    onTabSelected: (T?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    ScrollableTabRow(
+    PrimaryScrollableTabRow(
         selectedTabIndex = tabs.indexOfFirst { it.value == selectedTab }.coerceAtLeast(0),
         modifier = modifier.fillMaxWidth(),
         edgePadding = 16.dp

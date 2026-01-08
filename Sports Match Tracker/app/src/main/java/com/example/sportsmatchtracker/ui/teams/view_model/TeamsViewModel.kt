@@ -8,9 +8,9 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sportsmatchtracker.App
 import com.example.sportsmatchtracker.model.league.Team
-import com.example.sportsmatchtracker.model.match.Match
+import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.repository.teams.TeamsRepository
-import com.example.sportsmatchtracker.ui.home.view_model.HomeViewModel
+import com.example.sportsmatchtracker.ui.components.TabItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +21,15 @@ class TeamsViewModel(
 ): ViewModel() {
     private val _teams = MutableStateFlow<List<Team>>(emptyList())
     val teams: StateFlow<List<Team>> = _teams.asStateFlow()
+    
+    private val _sports = MutableStateFlow<List<Sport>>(emptyList())
+    val sports: StateFlow<List<Sport>> = _sports.asStateFlow()
+    
+    private val _tabItems = MutableStateFlow<List<TabItem<Sport?>>>(emptyList())
+    val tabItems: StateFlow<List<TabItem<Sport?>>> = _tabItems.asStateFlow()
+
+    private var isInitialized = false
+
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
@@ -31,19 +40,50 @@ class TeamsViewModel(
             }
         }
     }
+    
     init {
-        // Observe user state changes
+        // Obserwuj zmiany w teamsRepository
         viewModelScope.launch {
             teamsRepository.teamsState.collect { teams ->
                 _teams.value = teams
             }
         }
-
     }
 
-    fun getTeams() {
+    // Wywołaj tę funkcję przy wejściu na TeamsScreen
+    fun initialize() {
+        if (isInitialized) return
+        
         viewModelScope.launch {
-            teamsRepository.getTeams()
+            fetchSports()
+            setTabItems()
+            fetchTeams()
+            isInitialized = true
         }
+    }
+
+    private suspend fun fetchTeams() {
+        runCatching {
+            teamsRepository.fetchTeams()
+        }.onFailure { exception ->
+            println("Error fetching teams: ${exception.message}")
+        }
+    }
+
+    private suspend fun fetchSports() {
+        runCatching {
+            _sports.value = teamsRepository.getSports()
+        }.onFailure { exception ->
+            println("Error fetching sports: ${exception.message}")
+        }
+    }
+
+    private fun setTabItems() {
+        val tabs = mutableListOf<TabItem<Sport?>>()
+        tabs.add(TabItem(null, "All"))
+        _sports.value.forEach { sport ->
+            tabs.add(TabItem(sport, sport.name))
+        }
+        _tabItems.value = tabs
     }
 }

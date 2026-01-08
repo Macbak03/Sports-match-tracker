@@ -93,6 +93,7 @@ fun TeamsListItem(
 @Composable
 fun LeagueTeamsCard(
     leagueName: String,
+    sportName: String,
     teams: List<Team>,
     onTeamClick: (Team) -> Unit,
     modifier: Modifier = Modifier
@@ -150,6 +151,32 @@ fun LeagueTeamsCard(
 @Composable
 fun TeamListItemPreview() {
     SportsMatchTrackerTheme {
-        TeamsListItem(team = Team(name = "Team A", city = "City A", league = League(name = "League A", country = "Country A", sport = Sport("Football"))), onClick = {})
+        LeagueTeamsCard(
+            "Premier League",
+            "Football",
+            listOf(
+                Team(
+                    name = "Manchester City",
+                    city = "Manchester",
+                    league = League(
+                        name = "Premier League",
+                        country = "England",
+                        sport = Sport(
+                            name = "Football"
+                        ))
+                ),
+                Team(
+                    name = "Manchester United",
+                    city = "Manchester",
+                    league = League(
+                        name = "Premier League",
+                        country = "England",
+                        sport = Sport(
+                            name = "Football"
+                        ))
+                )
+            ),
+            onTeamClick = {}
+        )
     }
 }

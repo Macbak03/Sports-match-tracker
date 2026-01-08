@@ -14,9 +14,8 @@ import org.json.JSONObject
 class TeamsRepository : Repository() {
     private val _teamsState = MutableStateFlow<List<Team>>(listOf())
     val teamsState: StateFlow<List<Team>> = _teamsState.asStateFlow()
-    private val table = DatabaseSchema.Teams
 
-    suspend fun getTeams() {
+    suspend fun fetchTeams() {
         val request = selectWithJoinRequest(
             table = DatabaseSchema.Teams.TABLE_NAME,
             columns = listOf(
@@ -70,6 +69,36 @@ class TeamsRepository : Repository() {
 
                 _teamsState.value = teams
 
+            } else {
+                throw Exception(jsonResponse.optString("message"))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    suspend fun getSports() : List<Sport> {
+        val request = selectRequest(
+            table = DatabaseSchema.Sports.TABLE_NAME,
+            columns = listOf(DatabaseSchema.Sports.NAME)
+        )
+        val response = socketManager.sendRequestWithResponse(request) ?: throw Exception("No response from server")
+        try {
+            val jsonResponse = JSONObject(response)
+            val status = jsonResponse.getString("status")
+            val sports = mutableListOf<Sport>()
+
+            if (status == "success") {
+                val data = jsonResponse.getJSONArray("data")
+                val count = jsonResponse.getInt("count")
+                for (i in 0 until count) {
+                    val row = data.getJSONObject(i)
+                    sports.add(
+                        Sport(name = row.getString(DatabaseSchema.Sports.NAME))
+                    )
+                }
+                return sports
             } else {
                 throw Exception(jsonResponse.optString("message"))
             }
