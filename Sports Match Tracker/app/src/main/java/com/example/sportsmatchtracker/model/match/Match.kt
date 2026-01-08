@@ -3,43 +3,49 @@ package com.example.sportsmatchtracker.model.match
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import com.example.sportsmatchtracker.model.league.League
+import java.time.Instant
+import java.time.Duration
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 data class Match(
     val homeTeam: String,
     val awayTeam: String,
     val homeScore: Int,
     val awayScore: Int,
-    val matchDateTime: LocalDateTime,
-    val league: String,
-    val events: List<MatchEvent> = listOf()
+    val matchDateTime: Instant,
+    val league: League,
+    val events: List<MatchEvent> = listOf(),
+    val matchStadium: String,
+    val seasonStartDate: String = "",
+    val seasonEndDate: String = ""
 ) {
     val status: MatchStatus
         get() {
-            val now = LocalDateTime.now()
-            val minutesSinceStart = ChronoUnit.MINUTES.between(matchDateTime, now)
-            
+            val now = Instant.now()
+            val minutesSinceStart = Duration.between(matchDateTime, now).toMinutes()
+
             return when {
                 minutesSinceStart < 0 -> MatchStatus.SCHEDULED
                 minutesSinceStart <= 90 -> MatchStatus.LIVE
                 else -> MatchStatus.FINISHED
             }
         }
-    
+
     val gameTime: Int?
-        get() {
-            if (status == MatchStatus.LIVE) {
-                val now = LocalDateTime.now()
-                return ChronoUnit.MINUTES.between(matchDateTime, now).toInt()
-            }
-            return null
-        }
-    
+        get() =
+            if (status == MatchStatus.LIVE)
+                Duration.between(matchDateTime, Instant.now()).toMinutes().toInt()
+            else null
+
     val formattedDate: String
-        get() = matchDateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
-    
+        get() = matchDateTime
+            .atZone(ZoneId.of("Europe/Warsaw"))
+            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+
     val formattedTime: String
-        get() = matchDateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-    
-    val formattedDateTime: String
-        get() = matchDateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
+        get() = matchDateTime
+            .atZone(ZoneId.of("Europe/Warsaw"))
+            .format(DateTimeFormatter.ofPattern("HH:mm"))
 }

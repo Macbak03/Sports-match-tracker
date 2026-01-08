@@ -130,6 +130,8 @@ int executeDynamicSelect(cJSON *json, char *response)
              columns_str, table->valuestring, joins_str, where_str);
     printf("Executing SQL: %s\n", sql);
 
+    pthread_mutex_lock(&lock);
+
     sqlite3_stmt *stmt;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
 
@@ -138,6 +140,7 @@ int executeDynamicSelect(cJSON *json, char *response)
         sprintf(response,
                 "{\"status\":\"error\",\"message\":\"Query failed: %s\"}",
                 sqlite3_errmsg(db));
+        pthread_mutex_unlock(&lock);
         return 1;
     }
 
@@ -146,7 +149,8 @@ int executeDynamicSelect(cJSON *json, char *response)
     cJSON *data = cJSON_CreateArray();
 
     int rows = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW)
+    int step_rc;
+    while ((step_rc = sqlite3_step(stmt)) == SQLITE_ROW)
     {
         cJSON *row = cJSON_CreateObject();
         int cols = sqlite3_column_count(stmt);
@@ -166,12 +170,14 @@ int executeDynamicSelect(cJSON *json, char *response)
     cJSON_AddNumberToObject(json_response, "count", rows);
 
     char *out = cJSON_PrintUnformatted(json_response);
-    strcpy(response, out);
+    strncpy(response, out, 65535);
+    response[65535] = '\0';
     printf("Response JSON: %s\n", response);
 
     free(out);
     cJSON_Delete(json_response);
     sqlite3_finalize(stmt);
+    pthread_mutex_unlock(&lock);
 
     return 0;
 }
@@ -245,6 +251,8 @@ int executeDynamicInsert(cJSON *json, char *response)
              table->valuestring, columns_str, values_str);
     printf("Executing SQL: %s\n", sql);
 
+    pthread_mutex_lock(&lock);
+
     char *errMsg = NULL;
     int rc = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
 
@@ -264,6 +272,7 @@ int executeDynamicInsert(cJSON *json, char *response)
             "{\"status\":\"success\",\"message\":\"Row inserted\",\"lastId\":%lld}",
             lastId);
     printf("Response JSON: %s\n", response);
+    pthread_mutex_unlock(&lock);
     return 0;
 }
 
@@ -339,7 +348,7 @@ void *socketThread(void *arg)
         send(sock, connected, strlen(connected), 0);
     }
     char buffer[8192];   // Zwiększony dla większych zapytań
-    char response[8192]; // Zwiększony dla większych odpowiedzi
+    char response[65536]; // Zwiększony dla większych odpowiedzi
 
     while (1)
     {

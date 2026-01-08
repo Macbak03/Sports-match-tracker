@@ -8,6 +8,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sportsmatchtracker.App
 import com.example.sportsmatchtracker.model.match.Match
+import com.example.sportsmatchtracker.model.sport.Sport
+import com.example.sportsmatchtracker.ui.components.TabItem
 import com.example.sportsmatchtracker.repository.home.HomeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,11 +17,34 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    private val homeRepository: HomeRepository
+    val homeRepository: HomeRepository
 ): ViewModel() {
 
-    private val _matches = MutableStateFlow<List<Match>>(emptyList())
-    val matches: StateFlow<List<Match>> = _matches.asStateFlow()
+    val matches: StateFlow<List<Match>> = homeRepository.matchesState
+
+    private val _sports = MutableStateFlow<List<Sport>>(emptyList())
+    val sports: StateFlow<List<Sport>> = _sports.asStateFlow()
+
+    private val _tabItems = MutableStateFlow<List<TabItem<Sport?>>>(emptyList())
+    val tabItems: StateFlow<List<TabItem<Sport?>>> = _tabItems.asStateFlow()
+
+    private var isInitialized = false
+
+    init {
+        // debug: log matches and tabItems updates
+        viewModelScope.launch {
+            homeRepository.matchesState.collect { list ->
+                println("HomeViewModel: matches updated, size=${list.size}")
+            }
+        }
+
+        viewModelScope.launch {
+            _tabItems.collect { tabs ->
+                println("HomeViewModel: tabItems updated, size=${tabs.size}")
+            }
+        }
+    }
+
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
@@ -30,14 +55,40 @@ class HomeViewModel(
             }
         }
     }
-    init {
-        // Observe user state changes
+    fun initialize() {
+        if (isInitialized) return
+
         viewModelScope.launch {
-            homeRepository.matchesState.collect { matchList ->
-                _matches.value = matchList
+            fetchSports()
+            setTabItems()
+            refreshMatches()
+            isInitialized = true
+        }
+    }
+
+    fun refreshMatches() {
+        viewModelScope.launch {
+            try {
+                homeRepository.fetchMatches()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
-
+    }
+    private suspend fun fetchSports() {
+        runCatching {
+            _sports.value = homeRepository.getSports()
+        }.onFailure { exception ->
+            println("Error fetching sports: ${exception.message}")
+        }
+    }
+    private fun setTabItems() {
+        val tabs = mutableListOf<TabItem<Sport?>>()
+        tabs.add(TabItem(null, "All"))
+        _sports.value.forEach { sport ->
+            tabs.add(TabItem(sport, sport.name))
+        }
+        _tabItems.value = tabs
     }
 
 }

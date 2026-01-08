@@ -324,7 +324,7 @@ INSERT OR IGNORE INTO matches (start_date, home_score, away_score, season_start_
     ('2025-07-19 18:00:00', 1, 0, '2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'Stadion Narodowy', 'Legia Warszawa', 'Wisła Kraków'),
     ('2025-09-14 20:30:00', 2, 2, '2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'INEA Stadion', 'Lech Poznań', 'Pogoń Szczecin'),
     ('2026-02-08 17:00:00', 0, 0, '2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'Stadion Narodowy', 'Legia Warszawa', 'Lech Poznań'),
-    ('2026-03-15 14:30:00', 0, 0, '2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'INEA Stadion', 'Lech Poznań', 'Wisła Kraków');
+    ('2026-01-08 22:50:00', 0, 0, '2025-07-18', '2026-05-20', 'Ekstraklasa', 'Poland', 'INEA Stadion', 'Lech Poznań', 'Wisła Kraków');
 
 -- Sample matches - NBA (zakończony sezon)
 INSERT OR IGNORE INTO matches (start_date, home_score, away_score, season_start_date, season_end_date, season_league_name, season_league_country, building_name, home_team_name, away_team_name) VALUES 

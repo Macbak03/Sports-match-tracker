@@ -61,7 +61,7 @@ open class Repository {
                 joins.forEach { join ->
                     put(JSONObject().apply {
                         put("table", join.table)
-                        put("type", join.type)
+                        put("type", join.type.name)
                         put("on_left", join.onLeft)
                         put("on_right", join.onRight)
                     })
