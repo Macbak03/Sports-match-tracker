@@ -1,4 +1,4 @@
-package com.example.sportsmatchtracker.repository.teams
+package com.example.sportsmatchtracker.repository.leagues
 
 import com.example.sportsmatchtracker.model.database.JoinClause
 import com.example.sportsmatchtracker.model.league.League
@@ -11,25 +11,25 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONObject
 
-class TeamsRepository : Repository() {
-    private val _teamsState = MutableStateFlow<List<Team>>(listOf())
-    val teamsState: StateFlow<List<Team>> = _teamsState.asStateFlow()
+class LeaguesRepository : Repository() {
+    private val _leaguesState = MutableStateFlow<List<League>>(listOf())
+    val leaguesState: StateFlow<List<League>> = _leaguesState.asStateFlow()
 
-    suspend fun fetchTeams() {
+    suspend fun fetchLeagues() {
         val request = selectWithJoinRequest(
-            table = DatabaseSchema.Teams.TABLE_NAME,
+            table = DatabaseSchema.Leagues.TABLE_NAME,
             columns = listOf(
-                "${DatabaseSchema.Teams.TABLE_NAME}.${DatabaseSchema.Teams.NAME}",
-                "${DatabaseSchema.Teams.TABLE_NAME}.${DatabaseSchema.Teams.CITY}",
                 "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.NAME} as league_name",
                 "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.COUNTRY} as league_country",
+                "${DatabaseSchema.Teams.TABLE_NAME}.${DatabaseSchema.Teams.NAME} as team_name",
+                "${DatabaseSchema.Teams.TABLE_NAME}.${DatabaseSchema.Teams.CITY} as team_city",
                 "${DatabaseSchema.Sports.TABLE_NAME}.${DatabaseSchema.Sports.NAME} as sport_name"
             ),
             joins = listOf(
                 JoinClause(
-                    table = DatabaseSchema.Leagues.TABLE_NAME,
-                    onLeft = "${DatabaseSchema.Teams.TABLE_NAME}.${DatabaseSchema.Teams.LEAGUE_NAME}",
-                    onRight = "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.NAME}"
+                    table = DatabaseSchema.Teams.TABLE_NAME,
+                    onLeft = "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.NAME}",
+                    onRight = "${DatabaseSchema.Teams.TABLE_NAME}.${DatabaseSchema.Teams.LEAGUE_NAME}"
                 ),
                 JoinClause(
                     table = DatabaseSchema.Sports.TABLE_NAME,
@@ -48,26 +48,40 @@ class TeamsRepository : Repository() {
                 val data = jsonResponse.getJSONArray("data")
                 val count = jsonResponse.getInt("count")
 
-                val teams = mutableListOf<Team>()
+                // Group data by leagues
+                val leaguesMap = mutableMapOf<Pair<String, String>, MutableList<Team>>()
+                val sportsMap = mutableMapOf<Pair<String, String>, Sport>()
 
                 for (i in 0 until count) {
                     val row = data.getJSONObject(i)
-                    teams.add(
-                        Team(
-                            name = row.getString("name"),
-                            city = row.getString("city"),
-                            league = League(
-                                name = row.getString("league_name"),
-                                country = row.getString("league_country"),
-                                sport = Sport(
-                                    name = row.getString("sport_name")
-                                )
-                            )
-                        )
+                    val leagueName = row.getString("league_name")
+                    val leagueCountry = row.getString("league_country")
+                    val leagueKey = Pair(leagueName, leagueCountry)
+                    
+                    // Add sport name for leagues
+                    if (!sportsMap.containsKey(leagueKey)) {
+                        sportsMap[leagueKey] = Sport(name = row.getString("sport_name"))
+                    }
+                    
+                    // add team to the league team list
+                    val team = Team(
+                        name = row.getString("team_name"),
+                        city = row.getString("team_city")
+                    )
+                    
+                    leaguesMap.getOrPut(leagueKey) { mutableListOf() }.add(team)
+                }
+
+                val leagues = leaguesMap.map { (key, teams) ->
+                    League(
+                        name = key.first,
+                        country = key.second,
+                        sport = sportsMap[key]!!,
+                        teams = teams
                     )
                 }
 
-                _teamsState.value = teams
+                _leaguesState.value = leagues
 
             } else {
                 throw Exception(jsonResponse.optString("message"))

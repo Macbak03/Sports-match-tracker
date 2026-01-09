@@ -150,6 +150,7 @@ fun AppNavigation(
             composable(Screen.Teams.route) {
                 user?.let {
                     TeamsScreen(
+                        userEmail = it.email,
                         viewModel = teamsViewModel
                     )
                 }

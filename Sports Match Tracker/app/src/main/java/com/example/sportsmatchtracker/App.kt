@@ -4,7 +4,9 @@ import android.app.Application
 import com.example.sportsmatchtracker.repository.home.HomeRepository
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.repository.client.ClientRepository
-import com.example.sportsmatchtracker.repository.teams.TeamsRepository
+import com.example.sportsmatchtracker.repository.leagues.LeaguesRepository
+import com.example.sportsmatchtracker.repository.subscriptions.LeagueSubscriptionsRepository
+import com.example.sportsmatchtracker.repository.subscriptions.TeamSubscriptionsRepository
 
 class App: Application() {
     val clientRepository: ClientRepository by lazy {
@@ -16,7 +18,15 @@ class App: Application() {
     val homeRepository: HomeRepository by lazy {
         HomeRepository()
     }
-    val teamsRepository: TeamsRepository by lazy {
-        TeamsRepository()
+    val leaguesRepository: LeaguesRepository by lazy {
+        LeaguesRepository()
+    }
+
+    val leagueSubscriptionsRepository: LeagueSubscriptionsRepository by lazy {
+        LeagueSubscriptionsRepository()
+    }
+
+    val teamsSubscriptionsRepository: TeamSubscriptionsRepository by lazy {
+        TeamSubscriptionsRepository()
     }
 }

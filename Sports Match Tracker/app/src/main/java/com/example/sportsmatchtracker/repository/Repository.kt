@@ -46,6 +46,27 @@ open class Repository {
         }
     }
 
+    protected fun deleteRequest(
+        table: String,
+        where: List<WhereCondition>? = null
+    ): JSONObject {
+        return JSONObject().apply {
+            put("action", "DELETE")
+            put("table", table)
+            where?.let {
+                put("where", JSONArray().apply {
+                    it.forEach { condition ->
+                        put(JSONObject().apply {
+                            put("column", condition.column)
+                            put("operator", condition.operator)
+                            put("value", condition.value)
+                        })
+                    }
+                })
+            }
+        }
+    }
+
     protected fun selectWithJoinRequest(
         table: String,
         columns: List<String>,

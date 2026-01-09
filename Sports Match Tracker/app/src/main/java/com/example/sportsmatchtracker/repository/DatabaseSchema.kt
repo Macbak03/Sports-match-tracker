@@ -50,12 +50,16 @@ object DatabaseSchema {
         const val LEAGUE_COUNTRY = "league_country"
     }
     
-    object Subscriptions {
-        const val TABLE_NAME = "subscriptions"
-        const val TYPE = "type"
+    object LeagueSubscriptions {
+        const val TABLE_NAME = "league_subscriptions"
         const val SUBSCRIBER_EMAIL = "subscriber_email"
         const val LEAGUE_NAME = "league_name"
         const val LEAGUE_COUNTRY = "league_country"
+    }
+
+    object TeamSubscriptions {
+        const val TABLE_NAME = "team_subscriptions"
+        const val SUBSCRIBER_EMAIL = "subscriber_email"
         const val TEAM_NAME = "team_name"
     }
     

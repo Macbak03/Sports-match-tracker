@@ -20,8 +20,8 @@ int serverSocket = -1;
 /* SQLite connection */
 sqlite3 *db = NULL;
 
-/* ===================== SELECT DYNAMIC ===================== */
-int executeDynamicSelect(cJSON *json, char *response)
+/* ===================== SELECT ===================== */
+int executeSelect(cJSON *json, char *response)
 {
     char sql[8192]; // Zwiększony rozmiar dla bezpieczeństwa
 
@@ -182,8 +182,8 @@ int executeDynamicSelect(cJSON *json, char *response)
     return 0;
 }
 
-/* ===================== INSERT DYNAMIC ===================== */
-int executeDynamicInsert(cJSON *json, char *response)
+/* ===================== INSERT ===================== */
+int executeInsert(cJSON *json, char *response)
 {
     char sql[4096]; // Zwiększony rozmiar
 
@@ -276,6 +276,95 @@ int executeDynamicInsert(cJSON *json, char *response)
     return 0;
 }
 
+/* ===================== DELETE ===================== */
+int executeDelete(cJSON *json, char *response)
+{
+    char sql[4096]; // Zwiększony rozmiar
+
+    cJSON *table = cJSON_GetObjectItem(json, "table");
+    if (!cJSON_IsString(table))
+    {
+        sprintf(response, "{\"status\":\"error\",\"message\":\"Missing table name\"}");
+        return 1;
+    }
+
+    /* WHERE */
+    char where_str[2048] = "";
+    cJSON *where = cJSON_GetObjectItem(json, "where");
+    if (cJSON_IsObject(where))
+    {
+        cJSON *column = cJSON_GetObjectItem(where, "column");
+        cJSON *op = cJSON_GetObjectItem(where, "operator");
+        cJSON *value = cJSON_GetObjectItem(where, "value");
+
+        if (cJSON_IsString(column) && cJSON_IsString(op) && cJSON_IsString(value))
+        {
+            sprintf(where_str, " WHERE %s %s '%s'",
+                    column->valuestring,
+                    op->valuestring,
+                    value->valuestring);
+        }
+    }
+    else if (cJSON_IsArray(where))
+    {
+        /* Multiple WHERE conditions with AND */
+        int where_count = cJSON_GetArraySize(where);
+        if (where_count > 0)
+        {
+            strcat(where_str, " WHERE ");
+            for (int i = 0; i < where_count; i++)
+            {
+                cJSON *condition = cJSON_GetArrayItem(where, i);
+                cJSON *column = cJSON_GetObjectItem(condition, "column");
+                cJSON *op = cJSON_GetObjectItem(condition, "operator");
+                cJSON *value = cJSON_GetObjectItem(condition, "value");
+
+                if (cJSON_IsString(column) && cJSON_IsString(op) && cJSON_IsString(value))
+                {
+                    char condition_str[256];
+                    sprintf(condition_str, "%s %s '%s'",
+                            column->valuestring,
+                            op->valuestring,
+                            value->valuestring);
+                    strcat(where_str, condition_str);
+
+                    if (i < where_count - 1)
+                        strcat(where_str, " AND ");
+                }
+            }
+        }
+    }
+
+    snprintf(sql, sizeof(sql), "DELETE FROM %s%s",
+             table->valuestring, where_str);
+    printf("Executing SQL: %s\n", sql);
+
+    pthread_mutex_lock(&lock);
+
+    char *errMsg = NULL;
+    int rc = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
+
+    if (rc != SQLITE_OK)
+    {
+        sprintf(response,
+                "{\"status\":\"error\",\"message\":\"Delete failed: %s\"}",
+                errMsg ? errMsg : sqlite3_errmsg(db));
+        if (errMsg)
+            sqlite3_free(errMsg);
+        pthread_mutex_unlock(&lock);
+        return 1;
+    }
+
+    int deletedRows = sqlite3_changes(db);
+
+    sprintf(response,
+            "{\"status\":\"success\",\"message\":\"deleted\",\"rows\":%d}",
+            deletedRows);
+    printf("Response JSON: %s\n", response);
+    pthread_mutex_unlock(&lock);
+    return 0;
+}
+
 /* ===================== JSON ROUTER ===================== */
 void process_sql_request(char *json_message, char *response)
 {
@@ -296,11 +385,15 @@ void process_sql_request(char *json_message, char *response)
 
     if (strcmp(action->valuestring, "SELECT") == 0)
     {
-        executeDynamicSelect(json, response);
+        executeSelect(json, response);
     }
     else if (strcmp(action->valuestring, "INSERT") == 0)
     {
-        executeDynamicInsert(json, response);
+        executeInsert(json, response);
+    }
+    else if (strcmp(action->valuestring, "DELETE") == 0)
+    {
+        executeDelete(json, response);
     }
     else
     {
@@ -347,7 +440,7 @@ void *socketThread(void *arg)
         char *connected = "connected\n";
         send(sock, connected, strlen(connected), 0);
     }
-    char buffer[8192];   // Zwiększony dla większych zapytań
+    char buffer[8192];    // Zwiększony dla większych zapytań
     char response[65536]; // Zwiększony dla większych odpowiedzi
 
     while (1)

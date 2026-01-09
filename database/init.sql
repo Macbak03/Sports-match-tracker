@@ -57,19 +57,23 @@ CREATE TABLE IF NOT EXISTS teams (
     FOREIGN KEY (league_name, league_country) REFERENCES leagues(name, country) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Subscription table - POPRAWIONE: związki identyfikujące
--- Subskrypcja jest encją słabą, zależną od użytkownika, ligi i drużyny
-CREATE TABLE IF NOT EXISTS subscriptions (
-    type TEXT,
+-- Subskrypcje lig
+CREATE TABLE IF NOT EXISTS league_subscriptions (
     subscriber_email TEXT,
     league_name TEXT,
     league_country TEXT,
-    team_name TEXT,
-    PRIMARY KEY (type, subscriber_email, league_name, league_country, team_name),
+    PRIMARY KEY (subscriber_email, league_name, league_country),
     FOREIGN KEY (subscriber_email) REFERENCES users(email) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (league_name, league_country) REFERENCES leagues(name, country) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (league_name, league_country) REFERENCES leagues(name, country) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Subskrypcje drużyn
+CREATE TABLE IF NOT EXISTS team_subscriptions (
+    subscriber_email TEXT,
+    team_name TEXT,
+    PRIMARY KEY (subscriber_email, team_name),
+    FOREIGN KEY (subscriber_email) REFERENCES users(email) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (team_name) REFERENCES teams(name) ON DELETE CASCADE ON UPDATE CASCADE
-    CHECK(type IN ('team', 'league'))
 );
 
 -- Season table

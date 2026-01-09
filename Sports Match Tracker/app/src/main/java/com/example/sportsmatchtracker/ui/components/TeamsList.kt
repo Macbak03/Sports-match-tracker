@@ -1,17 +1,25 @@
 package com.example.sportsmatchtracker.ui.components
 
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +38,7 @@ import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
 fun TeamsListItem(
     team: Team,
     onClick: () -> Unit,
+    onFavouriteCLick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -72,19 +81,30 @@ fun TeamsListItem(
             )
         }
 
-        Spacer(modifier = Modifier.width(16.dp))
+        //Spacer(modifier = Modifier.width(16.dp))
 
-        Column(
+//        Column(
+//        ) {
+//            Text(
+//                text = "Last 5",
+//                color = Color.LightGray,
+//                style = MaterialTheme.typography.bodyMedium
+//            )
+//            Text(
+//                text = "W W W W W",
+//                color = Color.Black,
+//                style = MaterialTheme.typography.bodyMedium
+//            )
+//        }
+
+        IconButton(
+            onClick = onFavouriteCLick ,
+            modifier = Modifier.offset(x = 12.dp)
         ) {
-            Text(
-                text = "Last 5",
-                color = Color.LightGray,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "W W W W W",
-                color = Color.Black,
-                style = MaterialTheme.typography.bodyMedium
+            Icon(
+                imageVector = if (team.isSubscribed) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                contentDescription = if (team.isSubscribed) "Unsubscribe league" else "Subscribe league",
+                Modifier.size(20.dp)
             )
         }
     }
@@ -92,10 +112,10 @@ fun TeamsListItem(
 
 @Composable
 fun LeagueTeamsCard(
-    leagueName: String,
-    sportName: String,
-    teams: List<Team>,
+    league: League,
     onTeamClick: (Team) -> Unit,
+    onFavouriteLeagueClick: () -> Unit,
+    onFavouriteTeamClick: (Team) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -109,7 +129,7 @@ fun LeagueTeamsCard(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp
         ),
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             width = 0.5.dp,
             color = Color.LightGray.copy(alpha = 0.5f)
         )
@@ -118,18 +138,34 @@ fun LeagueTeamsCard(
             modifier = Modifier.padding(16.dp)
         ) {
             // Header
-            Text(
-                text = leagueName,
-                style = MaterialTheme.typography.titleLarge,
-                color = Color.Black,
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
-                textAlign = TextAlign.Start
-            )
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = league.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.Black,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.weight(2f)
+                )
+
+                IconButton(
+                    onClick = onFavouriteLeagueClick,
+                    modifier = Modifier.offset(x = 12.dp)
+                ) {
+                    Icon(
+                        imageVector = if (league.isSubscribed) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                        contentDescription = if (league.isSubscribed) "Unsubscribe league" else "Subscribe league"
+                    )
+                }
+            }
+
 
             // Matches with dividers
-            teams.forEachIndexed { index, match ->
+            league.teams.forEachIndexed { index, team ->
                 if (index > 0) {
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 8.dp),
@@ -138,8 +174,9 @@ fun LeagueTeamsCard(
                     )
                 }
                 TeamsListItem(
-                    team = match,
-                    onClick = { onTeamClick(match) },
+                    team = team,
+                    onClick = { onTeamClick(team) },
+                    onFavouriteCLick = { onFavouriteTeamClick(team) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -152,31 +189,26 @@ fun LeagueTeamsCard(
 fun TeamListItemPreview() {
     SportsMatchTrackerTheme {
         LeagueTeamsCard(
-            "Premier League",
-            "Football",
-            listOf(
-                Team(
-                    name = "Manchester City",
-                    city = "Manchester",
-                    league = League(
-                        name = "Premier League",
-                        country = "England",
-                        sport = Sport(
-                            name = "Football"
-                        ))
+            league = League(
+                name = "Premier League",
+                country = "England",
+                sport = Sport(
+                    name = "Football"
                 ),
-                Team(
-                    name = "Manchester United",
-                    city = "Manchester",
-                    league = League(
-                        name = "Premier League",
-                        country = "England",
-                        sport = Sport(
-                            name = "Football"
-                        ))
+                listOf(
+                    Team(
+                        name = "Manchester City",
+                        city = "Manchester",
+                    ),
+                    Team(
+                        name = "Manchester United",
+                        city = "Manchester",
+                    )
                 )
             ),
-            onTeamClick = {}
+            onTeamClick = {},
+            onFavouriteLeagueClick = {},
+            onFavouriteTeamClick = {}
         )
     }
 }
