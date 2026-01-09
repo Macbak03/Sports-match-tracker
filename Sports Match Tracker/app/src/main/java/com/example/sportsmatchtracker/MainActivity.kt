@@ -10,6 +10,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.example.sportsmatchtracker.navigation.AppNavigation
 import com.example.sportsmatchtracker.ui.auth.view_model.AuthViewModel
+import com.example.sportsmatchtracker.ui.favourites.view_model.FavouritesViewModel
 import com.example.sportsmatchtracker.ui.home.view_model.HomeViewModel
 import com.example.sportsmatchtracker.ui.network.view_model.ConnectionViewModel
 import com.example.sportsmatchtracker.ui.settings.view_model.SettingsViewModel
@@ -22,6 +23,8 @@ class MainActivity : ComponentActivity() {
     private val homeViewModel: HomeViewModel by viewModels { HomeViewModel.Factory }
     private val settingsViewModel: SettingsViewModel by viewModels { SettingsViewModel.Factory }
     private val teamsViewModel: TeamsViewModel by viewModels { TeamsViewModel.Factory }
+    private val favouritesViewModel: FavouritesViewModel by viewModels { FavouritesViewModel.Factory }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,7 +36,8 @@ class MainActivity : ComponentActivity() {
                     authViewModel = authViewModel,
                     homeViewModel = homeViewModel,
                     settingsViewModel = settingsViewModel,
-                    teamsViewModel = teamsViewModel
+                    teamsViewModel = teamsViewModel,
+                    favouritesViewModel = favouritesViewModel
                 )
             }
         }

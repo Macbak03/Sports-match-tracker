@@ -22,7 +22,6 @@ import com.example.sportsmatchtracker.ui.teams.view_model.TeamsViewModel
 
 @Composable
 fun TeamsScreen(
-    userEmail: String,
     viewModel: TeamsViewModel
 ) {
     LaunchedEffect(Unit) {
@@ -70,18 +69,14 @@ fun TeamsScreen(
                         league = league,
                         onTeamClick = { team -> selectedTeam = team },
                         onFavouriteLeagueClick = {
-                            if (league.isSubscribed) viewModel.unsubscribeLeague(
-                                userEmail,
-                                league.toSubscription()
-                            )
-                            else viewModel.subscribeLeague(userEmail, league.toSubscription())
+                            if (league.isSubscribed)
+                                viewModel.unsubscribeLeague(league.toSubscription())
+                            else viewModel.subscribeLeague(league.toSubscription())
                         },
                         onFavouriteTeamClick = { team ->
-                            if (team.isSubscribed) viewModel.unsubscribeTeam(
-                                userEmail,
-                                team.toSubscription()
-                            )
-                            else viewModel.subscribeTeam(userEmail, team.toSubscription())
+                            if (team.isSubscribed)
+                                viewModel.unsubscribeTeam(team.toSubscription())
+                            else viewModel.subscribeTeam(team.toSubscription())
                         },
                         modifier = Modifier.fillParentMaxWidth()
                     )

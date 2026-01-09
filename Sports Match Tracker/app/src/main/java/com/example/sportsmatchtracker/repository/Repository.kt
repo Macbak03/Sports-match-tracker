@@ -26,6 +26,7 @@ open class Repository {
                             put("column", condition.column)
                             put("operator", condition.operator)
                             put("value", condition.value)
+                            put("logical_operator", condition.logicalOperator.name)
                         })
                     }
                 })
@@ -60,6 +61,7 @@ open class Repository {
                             put("column", condition.column)
                             put("operator", condition.operator)
                             put("value", condition.value)
+                            put("logical_operator", condition.logicalOperator.name)
                         })
                     }
                 })
@@ -96,6 +98,7 @@ open class Repository {
                             put("column", condition.column)
                             put("operator", condition.operator)
                             put("value", condition.value)
+                            put("logical_operator", condition.logicalOperator.name)
                         })
                     }
                 })

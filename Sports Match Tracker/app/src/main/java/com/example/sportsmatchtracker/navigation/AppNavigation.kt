@@ -19,6 +19,7 @@ import com.example.sportsmatchtracker.ui.auth.view_model.AuthViewModel
 import com.example.sportsmatchtracker.ui.components.BottomBar
 import com.example.sportsmatchtracker.ui.components.TopBar
 import com.example.sportsmatchtracker.ui.favourites.view.FavouritesScreen
+import com.example.sportsmatchtracker.ui.favourites.view_model.FavouritesViewModel
 import com.example.sportsmatchtracker.ui.network.view.ConnectionScreen
 import com.example.sportsmatchtracker.ui.home.view.HomeScreen
 import com.example.sportsmatchtracker.ui.home.view_model.HomeViewModel
@@ -35,7 +36,8 @@ fun AppNavigation(
     authViewModel: AuthViewModel,
     homeViewModel: HomeViewModel,
     settingsViewModel: SettingsViewModel,
-    teamsViewModel: TeamsViewModel
+    teamsViewModel: TeamsViewModel,
+    favouritesViewModel: FavouritesViewModel
 ) {
     val navController = rememberNavController()
     val clientState by connectionViewModel.uiState.collectAsState()
@@ -150,7 +152,6 @@ fun AppNavigation(
             composable(Screen.Teams.route) {
                 user?.let {
                     TeamsScreen(
-                        userEmail = it.email,
                         viewModel = teamsViewModel
                     )
                 }
@@ -158,7 +159,9 @@ fun AppNavigation(
 
             composable(Screen.Favourites.route) {
                 user?.let {
-                    FavouritesScreen()
+                    FavouritesScreen(
+                        viewModel = favouritesViewModel
+                    )
                 }
             }
 

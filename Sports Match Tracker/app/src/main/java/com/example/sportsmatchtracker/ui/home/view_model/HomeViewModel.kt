@@ -10,17 +10,17 @@ import com.example.sportsmatchtracker.App
 import com.example.sportsmatchtracker.model.match.Match
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.ui.components.TabItem
-import com.example.sportsmatchtracker.repository.home.HomeRepository
+import com.example.sportsmatchtracker.repository.matches.MatchesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    val homeRepository: HomeRepository
+    val matchesRepository: MatchesRepository
 ): ViewModel() {
 
-    val matches: StateFlow<List<Match>> = homeRepository.matchesState
+    val matches: StateFlow<List<Match>> = matchesRepository.matchesState
 
     private val _sports = MutableStateFlow<List<Sport>>(emptyList())
     val sports: StateFlow<List<Sport>> = _sports.asStateFlow()
@@ -33,7 +33,7 @@ class HomeViewModel(
     init {
         // debug: log matches and tabItems updates
         viewModelScope.launch {
-            homeRepository.matchesState.collect { list ->
+            matchesRepository.matchesState.collect { list ->
                 println("HomeViewModel: matches updated, size=${list.size}")
             }
         }
@@ -48,9 +48,9 @@ class HomeViewModel(
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val homeRepository = (this[APPLICATION_KEY] as App).homeRepository
+                val homeRepository = (this[APPLICATION_KEY] as App).matchesRepository
                 HomeViewModel(
-                    homeRepository = homeRepository
+                    matchesRepository = homeRepository
                 )
             }
         }
@@ -69,7 +69,7 @@ class HomeViewModel(
     fun refreshMatches() {
         viewModelScope.launch {
             try {
-                homeRepository.fetchMatches()
+                matchesRepository.fetchMatches()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -77,7 +77,7 @@ class HomeViewModel(
     }
     private suspend fun fetchSports() {
         runCatching {
-            _sports.value = homeRepository.getSports()
+            _sports.value = matchesRepository.getSports()
         }.onFailure { exception ->
             println("Error fetching sports: ${exception.message}")
         }

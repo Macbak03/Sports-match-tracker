@@ -98,7 +98,7 @@ int executeSelect(cJSON *json, char *response)
     }
     else if (cJSON_IsArray(where))
     {
-        /* Multiple WHERE conditions with AND */
+        /* Multiple WHERE conditions with AND/OR */
         int where_count = cJSON_GetArraySize(where);
         if (where_count > 0)
         {
@@ -109,6 +109,7 @@ int executeSelect(cJSON *json, char *response)
                 cJSON *column = cJSON_GetObjectItem(condition, "column");
                 cJSON *op = cJSON_GetObjectItem(condition, "operator");
                 cJSON *value = cJSON_GetObjectItem(condition, "value");
+                cJSON *logical_op = cJSON_GetObjectItem(condition, "logical_operator");
 
                 if (cJSON_IsString(column) && cJSON_IsString(op) && cJSON_IsString(value))
                 {
@@ -120,7 +121,14 @@ int executeSelect(cJSON *json, char *response)
                     strcat(where_str, condition_str);
 
                     if (i < where_count - 1)
-                        strcat(where_str, " AND ");
+                    {
+                        const char *logical_operator = " AND ";
+                        if (cJSON_IsString(logical_op) && strcmp(logical_op->valuestring, "OR") == 0)
+                        {
+                            logical_operator = " OR ";
+                        }
+                        strcat(where_str, logical_operator);
+                    }
                 }
             }
         }
@@ -307,7 +315,7 @@ int executeDelete(cJSON *json, char *response)
     }
     else if (cJSON_IsArray(where))
     {
-        /* Multiple WHERE conditions with AND */
+        /* Multiple WHERE conditions with AND/OR */
         int where_count = cJSON_GetArraySize(where);
         if (where_count > 0)
         {
@@ -318,6 +326,7 @@ int executeDelete(cJSON *json, char *response)
                 cJSON *column = cJSON_GetObjectItem(condition, "column");
                 cJSON *op = cJSON_GetObjectItem(condition, "operator");
                 cJSON *value = cJSON_GetObjectItem(condition, "value");
+                cJSON *logical_op = cJSON_GetObjectItem(condition, "logical_operator");
 
                 if (cJSON_IsString(column) && cJSON_IsString(op) && cJSON_IsString(value))
                 {
@@ -329,7 +338,14 @@ int executeDelete(cJSON *json, char *response)
                     strcat(where_str, condition_str);
 
                     if (i < where_count - 1)
-                        strcat(where_str, " AND ");
+                    {
+                        const char *logical_operator = " AND ";
+                        if (cJSON_IsString(logical_op) && strcmp(logical_op->valuestring, "OR") == 0)
+                        {
+                            logical_operator = " OR ";
+                        }
+                        strcat(where_str, logical_operator);
+                    }
                 }
             }
         }

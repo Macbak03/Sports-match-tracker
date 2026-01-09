@@ -1,7 +1,7 @@
 package com.example.sportsmatchtracker
 
 import android.app.Application
-import com.example.sportsmatchtracker.repository.home.HomeRepository
+import com.example.sportsmatchtracker.repository.matches.MatchesRepository
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.repository.client.ClientRepository
 import com.example.sportsmatchtracker.repository.leagues.LeaguesRepository
@@ -15,8 +15,8 @@ class App: Application() {
     val authRepository: AuthRepository by lazy {
         AuthRepository()
     }
-    val homeRepository: HomeRepository by lazy {
-        HomeRepository()
+    val matchesRepository: MatchesRepository by lazy {
+        MatchesRepository()
     }
     val leaguesRepository: LeaguesRepository by lazy {
         LeaguesRepository()

@@ -13,13 +13,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Text
 import com.example.sportsmatchtracker.model.match.Match
-import com.example.sportsmatchtracker.repository.home.HomeRepository
+import com.example.sportsmatchtracker.repository.matches.MatchesRepository
 import com.example.sportsmatchtracker.ui.components.LeagueMatchCard
 import com.example.sportsmatchtracker.ui.components.TabSelector
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.ui.components.MatchDetailsBottomSheet
 import com.example.sportsmatchtracker.ui.home.view_model.HomeViewModel
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
@@ -34,7 +34,7 @@ fun HomeScreen(
 
     val matches by viewModel.matches.collectAsState()
     val tabItems by viewModel.tabItems.collectAsState()
-    var selectedSport by remember { mutableStateOf<com.example.sportsmatchtracker.model.sport.Sport?>(null) }
+    var selectedSport by remember { mutableStateOf<Sport?>(null) }
     var selectedMatch by remember { mutableStateOf<Match?>(null) }
 
     val filteredMatches = remember(matches, selectedSport) {
@@ -87,7 +87,7 @@ fun HomeScreen(
             onDismiss = { selectedMatch = null },
             onFetchEvents = { m ->
                 try {
-                    viewModel.homeRepository.fetchMatchEvents(m)
+                    viewModel.matchesRepository.fetchMatchEvents(m)
                 } catch (e: Exception) {
                     e.printStackTrace()
                     emptyList()
@@ -101,6 +101,6 @@ fun HomeScreen(
 @Composable
 fun ConnectPreview() {
     SportsMatchTrackerTheme {
-        HomeScreen(viewModel = HomeViewModel(HomeRepository()))
+        HomeScreen(viewModel = HomeViewModel(MatchesRepository()))
     }
 }

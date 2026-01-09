@@ -143,7 +143,8 @@ class TeamsViewModel(
         }
     }
 
-    fun subscribeTeam(userEmail: String, subscription: TeamSubscription) = viewModelScope.launch {
+    fun subscribeTeam(subscription: TeamSubscription) = viewModelScope.launch {
+        val userEmail = authRepository.userState.value?.email ?: return@launch
         runCatching {
             teamSubscriptionsRepository.addSubscription(userEmail, subscription)
         }.onFailure { exception ->
@@ -151,7 +152,8 @@ class TeamsViewModel(
         }
     }
 
-    fun unsubscribeTeam(userEmail: String, subscription: TeamSubscription) = viewModelScope.launch {
+    fun unsubscribeTeam(subscription: TeamSubscription) = viewModelScope.launch {
+        val userEmail = authRepository.userState.value?.email ?: return@launch
         runCatching {
             teamSubscriptionsRepository.unsubscribe(userEmail, subscription)
         }.onFailure { exception ->
@@ -159,8 +161,9 @@ class TeamsViewModel(
         }
     }
 
-    fun subscribeLeague(userEmail: String, subscription: LeagueSubscription) =
+    fun subscribeLeague(subscription: LeagueSubscription) =
         viewModelScope.launch {
+            val userEmail = authRepository.userState.value?.email ?: return@launch
             runCatching {
                 leagueSubscriptionsRepository.addSubscription(userEmail, subscription)
             }.onFailure { exception ->
@@ -168,7 +171,8 @@ class TeamsViewModel(
             }
         }
 
-    fun unsubscribeLeague(userEmail: String, subscription: LeagueSubscription) = viewModelScope.launch {
+    fun unsubscribeLeague(subscription: LeagueSubscription) = viewModelScope.launch {
+        val userEmail = authRepository.userState.value?.email ?: return@launch
         runCatching {
             leagueSubscriptionsRepository.unsubscribe(userEmail, subscription)
         }.onFailure { exception ->
