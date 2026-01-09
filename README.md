@@ -11,7 +11,7 @@ TCP server z bazą danych SQLite do trackowania meczy.
 ## Instalacja
 
 ```bash
-# Instalacja zależności (Ubuntu/Debian)
+# Instalacja zależności
 sudo apt install gcc sqlite3 libsqlite3-dev make
 
 # Inicjalizacja bazy danych
@@ -34,20 +34,19 @@ Serwer nasłuchuje na porcie **1100**.
 ```
 .
 ├── Server/
-│   ├── server.c      # Główny kod serwera
-│   └── cJSON.c       # Parser JSON
+│   ├── server.c          # Główny kod serwera
+│   └── cJSON.c           # Parser JSON
 ├── database/
-│   ├── init.sql      # Schemat bazy danych
-│   └── sports.db     # Plik bazy SQLite (generowany)
-├── Makefile          # Build script
+│   ├── init.sql          # Schemat bazy danych
+│   └── sports.db         # Plik bazy SQLite (generowany)
+|
+├──Sports Match Tracker   # Folder z plikami aplikacji
+|
+├── Makefile
 └── README.md
 ```
 
-## API
-
-Wysyłaj JSON przez TCP do portu 1100:
-
-### SELECT Query
+### Przykładowe query
 
 ```json
 {
@@ -77,17 +76,9 @@ Wysyłaj JSON przez TCP do portu 1100:
 }
 ```
 
-## Dodawanie zmian do bazy
-
-Wszystkie zmiany w schemacie lub danych dodawaj do `database/init.sql`, potem:
-
-```bash
-rm database/sports.db
-make init-db
-```
-
 ## Makefile komendy
 
 - `make` - kompiluje projekt
 - `make clean` - usuwa pliki obiektowe
 - `make init-db` - tworzy bazę danych
+
