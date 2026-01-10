@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.sportsmatchtracker.model.match.Match
 import com.example.sportsmatchtracker.ui.components.LeagueMatchCard
+import com.example.sportsmatchtracker.ui.components.MatchDetailsBottomSheet
 import com.example.sportsmatchtracker.ui.components.TabSelector
 import com.example.sportsmatchtracker.ui.favourites.view_model.FavouritesViewModel
 import kotlin.collections.component1
@@ -100,6 +101,16 @@ fun FavouritesScreen(
                     )
                 }
             }
+        }
+
+        selectedMatch?.let { match ->
+            MatchDetailsBottomSheet(
+                match = match,
+                onDismiss = { selectedMatch = null },
+                onFetchEvents = { match ->
+                    viewModel.fetchMatchEvents(match)
+                }
+            )
         }
     }
 }

@@ -21,9 +21,12 @@ import com.example.sportsmatchtracker.model.match.MatchEvent
 import com.example.sportsmatchtracker.model.match.MatchStatus
 import com.example.sportsmatchtracker.model.league.League
 import com.example.sportsmatchtracker.model.sport.Sport
+import com.example.sportsmatchtracker.model.team.Team
 import com.example.sportsmatchtracker.ui.tables.view.TablesScreen
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 import kotlin.collections.component1
 import kotlin.collections.component2
 
@@ -268,5 +271,40 @@ private fun MatchEvents(events: List<MatchEvent>) {
                 }
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun MatchDetailsBottomSheetPreview() {
+    SportsMatchTrackerTheme {
+        MatchDetailsBottomSheet(
+            match = Match(
+                homeTeam = "Manchester City",
+                awayTeam = "Manchester United",
+                homeScore = 2,
+                awayScore = 1,
+                matchDateTime = LocalDateTime.now().atZone(ZoneId.of("Europe/Warsaw"))
+                    .toInstant(),
+                league = League(
+                    name = "Premier League",
+                    country = "England",
+                    sport = Sport(
+                        name = "Football"
+                    )
+                ),
+                events = listOf(
+                    MatchEvent(
+                        gameTime = "45'",
+                        event = "Goal by Manchester City"
+                    )
+                ),
+                matchStadium = "Old Trafford",
+                seasonStartDate = LocalDate.now().minusMonths(3),
+                seasonEndDate = LocalDate.now().plusMonths(3)
+            ),
+            onDismiss = {}
+        )
     }
 }

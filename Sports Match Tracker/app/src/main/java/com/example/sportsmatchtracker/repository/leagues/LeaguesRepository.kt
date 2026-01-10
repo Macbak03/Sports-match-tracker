@@ -2,7 +2,7 @@ package com.example.sportsmatchtracker.repository.leagues
 
 import com.example.sportsmatchtracker.model.database.JoinClause
 import com.example.sportsmatchtracker.model.league.League
-import com.example.sportsmatchtracker.model.league.Team
+import com.example.sportsmatchtracker.model.team.Team
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.repository.DatabaseSchema
 import com.example.sportsmatchtracker.repository.Repository

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONObject
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -21,8 +22,13 @@ class MatchesRepository : Repository() {
     private val _matchesState = MutableStateFlow<List<Match>>(emptyList())
     val matchesState: StateFlow<List<Match>> = _matchesState.asStateFlow()
 
-    suspend fun fetchMatches() {
-        val request = selectWithJoinRequest(
+    private fun buildMatchesRequest(
+        where: List<WhereCondition>? = null,
+        orderBy: String? = null,
+        orderDirection: String? = null,
+        limit: Int? = null
+    ): JSONObject {
+        return selectWithJoinRequest(
             table = DatabaseSchema.Matches.TABLE_NAME,
             columns = listOf(
                 "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.START_DATE} as start_date",
@@ -48,9 +54,15 @@ class MatchesRepository : Repository() {
                     onLeft = "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.SPORTS_NAME}",
                     onRight = "${DatabaseSchema.Sports.TABLE_NAME}.${DatabaseSchema.Sports.NAME}"
                 )
-            )
+            ),
+            where = where,
+            orderBy = orderBy,
+            orderDirection = orderDirection,
+            limit = limit
         )
+    }
 
+    private suspend fun parseMatchesResponse(request: JSONObject): List<Match> {
         val response = socketManager.sendRequestWithResponse(request) ?: throw Exception("No response from server")
 
         try {
@@ -62,15 +74,18 @@ class MatchesRepository : Repository() {
                 val count = jsonResponse.getInt("count")
 
                 val matches = mutableListOf<Match>()
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
                 for (i in 0 until count) {
                     try {
                         val row = data.getJSONObject(i)
-                        val localDateTime = LocalDateTime.parse(row.getString("start_date"), formatter)
+                        val localDateTime = LocalDateTime.parse(row.getString("start_date"), dateTimeFormatter)
                         val matchDateTime = localDateTime
                             .atZone(ZoneId.of("Europe/Warsaw"))
                             .toInstant()
+                        val seasonStartDate = LocalDate.parse(row.getString("season_start_date"), dateFormatter)
+                        val seasonEndDate = LocalDate.parse(row.getString("season_end_date"), dateFormatter)
                         val league = League(
                             name = row.getString("league_name"),
                             country = row.getString("league_country"),
@@ -87,17 +102,15 @@ class MatchesRepository : Repository() {
                             league = league,
                             events = events,
                             matchStadium = row.getString("building_name"),
-                            seasonStartDate = row.getString("season_start_date"),
-                            seasonEndDate = row.getString("season_end_date")
-                            )
-                        )
+                            seasonStartDate = seasonStartDate,
+                            seasonEndDate = seasonEndDate
+                        ))
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
                 }
 
-                _matchesState.value = matches
-
+                return matches
             } else {
                 throw Exception(jsonResponse.optString("message"))
             }
@@ -107,34 +120,17 @@ class MatchesRepository : Repository() {
         }
     }
 
+    suspend fun fetchMatches() {
+        val request = buildMatchesRequest()
+        try {
+            _matchesState.value = parseMatchesResponse(request)
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
     suspend fun fetchTeamMatches(teamName: String): List<Match> {
-        val request = selectWithJoinRequest(
-            table = DatabaseSchema.Matches.TABLE_NAME,
-            columns = listOf(
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.START_DATE} as start_date",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.HOME_SCORE} as home_score",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.AWAY_SCORE} as away_score",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.SEASON_START_DATE} as season_start_date",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.SEASON_END_DATE} as season_end_date",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.BUILDING_NAME} as building_name",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.HOME_TEAM_NAME} as home_team_name",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.AWAY_TEAM_NAME} as away_team_name",
-                "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.NAME} as league_name",
-                "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.COUNTRY} as league_country",
-                "${DatabaseSchema.Sports.TABLE_NAME}.${DatabaseSchema.Sports.NAME} as sport_name"
-            ),
-            joins = listOf(
-                JoinClause(
-                    table = DatabaseSchema.Leagues.TABLE_NAME,
-                    onLeft = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.SEASON_LEAGUE_NAME}",
-                    onRight = "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.NAME}"
-                ),
-                JoinClause(
-                    table = DatabaseSchema.Sports.TABLE_NAME,
-                    onLeft = "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.SPORTS_NAME}",
-                    onRight = "${DatabaseSchema.Sports.TABLE_NAME}.${DatabaseSchema.Sports.NAME}"
-                )
-            ),
+        val request = buildMatchesRequest(
             where = listOf(
                 WhereCondition(
                     column = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.HOME_TEAM_NAME}",
@@ -150,91 +146,15 @@ class MatchesRepository : Repository() {
                 )
             )
         )
-
-        val response = socketManager.sendRequestWithResponse(request) ?: throw Exception("No response from server")
-
         try {
-            val jsonResponse = JSONObject(response)
-            val status = jsonResponse.getString("status")
-
-            if (status == "success") {
-                val data = jsonResponse.getJSONArray("data")
-                val count = jsonResponse.getInt("count")
-
-                val matches = mutableListOf<Match>()
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-
-                for (i in 0 until count) {
-                    try {
-                        val row = data.getJSONObject(i)
-                        val localDateTime = LocalDateTime.parse(row.getString("start_date"), formatter)
-                        val matchDateTime = localDateTime
-                            .atZone(ZoneId.of("Europe/Warsaw"))
-                            .toInstant()
-                        val league = League(
-                            name = row.getString("league_name"),
-                            country = row.getString("league_country"),
-                            sport = Sport(name = row.getString("sport_name"))
-                        )
-                        val events = emptyList<MatchEvent>()
-
-                        matches.add(Match(
-                            homeTeam = row.getString("home_team_name"),
-                            awayTeam = row.getString("away_team_name"),
-                            homeScore = row.optInt("home_score"),
-                            awayScore = row.optInt("away_score"),
-                            matchDateTime = matchDateTime,
-                            league = league,
-                            events = events,
-                            matchStadium = row.getString("building_name"),
-                            seasonStartDate = row.getString("season_start_date"),
-                            seasonEndDate = row.getString("season_end_date")
-                        )
-                        )
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-
-                return matches
-
-            } else {
-                throw Exception(jsonResponse.optString("message"))
-            }
+            return parseMatchesResponse(request)
         } catch (e: Exception) {
-            e.printStackTrace()
             throw e
         }
     }
 
     suspend fun fetchLeagueMatches(leagueName: String, leagueCountry: String): List<Match> {
-        val request = selectWithJoinRequest(
-            table = DatabaseSchema.Matches.TABLE_NAME,
-            columns = listOf(
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.START_DATE} as start_date",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.HOME_SCORE} as home_score",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.AWAY_SCORE} as away_score",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.SEASON_START_DATE} as season_start_date",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.SEASON_END_DATE} as season_end_date",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.BUILDING_NAME} as building_name",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.HOME_TEAM_NAME} as home_team_name",
-                "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.AWAY_TEAM_NAME} as away_team_name",
-                "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.NAME} as league_name",
-                "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.COUNTRY} as league_country",
-                "${DatabaseSchema.Sports.TABLE_NAME}.${DatabaseSchema.Sports.NAME} as sport_name"
-            ),
-            joins = listOf(
-                JoinClause(
-                    table = DatabaseSchema.Leagues.TABLE_NAME,
-                    onLeft = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.SEASON_LEAGUE_NAME}",
-                    onRight = "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.NAME}"
-                ),
-                JoinClause(
-                    table = DatabaseSchema.Sports.TABLE_NAME,
-                    onLeft = "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.SPORTS_NAME}",
-                    onRight = "${DatabaseSchema.Sports.TABLE_NAME}.${DatabaseSchema.Sports.NAME}"
-                )
-            ),
+        val request = buildMatchesRequest(
             where = listOf(
                 WhereCondition(
                     column = "${DatabaseSchema.Leagues.TABLE_NAME}.${DatabaseSchema.Leagues.NAME}",
@@ -248,59 +168,9 @@ class MatchesRepository : Repository() {
                 )
             )
         )
-
-        val response = socketManager.sendRequestWithResponse(request) ?: throw Exception("No response from server")
-
         try {
-            val jsonResponse = JSONObject(response)
-            val status = jsonResponse.getString("status")
-
-            if (status == "success") {
-                val data = jsonResponse.getJSONArray("data")
-                val count = jsonResponse.getInt("count")
-
-                val matches = mutableListOf<Match>()
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-
-                for (i in 0 until count) {
-                    try {
-                        val row = data.getJSONObject(i)
-                        val localDateTime = LocalDateTime.parse(row.getString("start_date"), formatter)
-                        val matchDateTime = localDateTime
-                            .atZone(ZoneId.of("Europe/Warsaw"))
-                            .toInstant()
-                        val league = League(
-                            name = row.getString("league_name"),
-                            country = row.getString("league_country"),
-                            sport = Sport(name = row.getString("sport_name"))
-                        )
-                        val events = emptyList<MatchEvent>()
-
-                        matches.add(Match(
-                            homeTeam = row.getString("home_team_name"),
-                            awayTeam = row.getString("away_team_name"),
-                            homeScore = row.optInt("home_score"),
-                            awayScore = row.optInt("away_score"),
-                            matchDateTime = matchDateTime,
-                            league = league,
-                            events = events,
-                            matchStadium = row.getString("building_name"),
-                            seasonStartDate = row.getString("season_start_date"),
-                            seasonEndDate = row.getString("season_end_date")
-                        )
-                        )
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-
-                return matches
-
-            } else {
-                throw Exception(jsonResponse.optString("message"))
-            }
+            return parseMatchesResponse(request)
         } catch (e: Exception) {
-            e.printStackTrace()
             throw e
         }
     }
@@ -310,6 +180,7 @@ class MatchesRepository : Repository() {
         val matchStartDate = match.matchDateTime
             .atZone(ZoneId.of("Europe/Warsaw"))
             .format(formatter)
+
 
         val request = selectRequest(
             table = DatabaseSchema.MatchEvents.TABLE_NAME,
@@ -400,6 +271,58 @@ class MatchesRepository : Repository() {
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            throw e
+        }
+    }
+
+    suspend fun fetchLastFiveMatches(): List<Match> {
+        val currentDate = LocalDateTime.now()
+            .atZone(ZoneId.of("Europe/Warsaw"))
+            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+
+        val request = buildMatchesRequest(
+            where = listOf(
+                WhereCondition(
+                    column = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.START_DATE}",
+                    operator = "<",
+                    value = currentDate,
+                    logicalOperator = LogicalOperator.AND
+                )
+            ),
+            orderBy = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.START_DATE}",
+            orderDirection = "DESC",
+            limit = 5
+        )
+
+        try {
+            return parseMatchesResponse(request)
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    suspend fun fetchNextMatch(): Match? {
+        val currentDate = LocalDateTime.now()
+            .atZone(ZoneId.of("Europe/Warsaw"))
+            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+
+        val request = buildMatchesRequest(
+            where = listOf(
+                WhereCondition(
+                    column = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.START_DATE}",
+                    operator = ">=",
+                    value = currentDate,
+                    logicalOperator = LogicalOperator.AND
+                )
+            ),
+            orderBy = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.START_DATE}",
+            orderDirection = "ASC",
+            limit = 1
+        )
+        try {
+            val matches = parseMatchesResponse(request)
+            return matches.firstOrNull()
+        } catch (e: Exception) {
             throw e
         }
     }

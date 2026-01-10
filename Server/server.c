@@ -134,8 +134,30 @@ int executeSelect(cJSON *json, char *response)
         }
     }
 
-    snprintf(sql, sizeof(sql), "SELECT %s FROM %s%s%s",
-             columns_str, table->valuestring, joins_str, where_str);
+    /* ORDER BY */
+    char order_str[256] = "";
+    cJSON *order_by = cJSON_GetObjectItem(json, "order_by");
+    cJSON *order_direction = cJSON_GetObjectItem(json, "order_direction");
+    if (cJSON_IsString(order_by))
+    {
+        const char *direction = "ASC";
+        if (cJSON_IsString(order_direction))
+        {
+            direction = order_direction->valuestring;
+        }
+        sprintf(order_str, " ORDER BY %s %s", order_by->valuestring, direction);
+    }
+
+    /* LIMIT */
+    char limit_str[64] = "";
+    cJSON *limit = cJSON_GetObjectItem(json, "limit");
+    if (cJSON_IsNumber(limit) && limit->valueint > 0)
+    {
+        sprintf(limit_str, " LIMIT %d", limit->valueint);
+    }
+
+    snprintf(sql, sizeof(sql), "SELECT %s FROM %s%s%s%s%s",
+             columns_str, table->valuestring, joins_str, where_str, order_str, limit_str);
     printf("Executing SQL: %s\n", sql);
 
     pthread_mutex_lock(&lock);

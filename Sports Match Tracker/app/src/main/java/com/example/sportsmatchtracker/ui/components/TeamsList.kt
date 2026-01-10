@@ -30,7 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.sportsmatchtracker.model.league.League
-import com.example.sportsmatchtracker.model.league.Team
+import com.example.sportsmatchtracker.model.team.Team
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
 

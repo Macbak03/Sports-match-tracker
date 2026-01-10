@@ -12,7 +12,10 @@ open class Repository {
     protected fun selectRequest(
         table: String,
         columns: List<String>,
-        where: List<WhereCondition>? = null
+        where: List<WhereCondition>? = null,
+        orderBy: String? = null,
+        orderDirection: String? = null,
+        limit: Int? = null
     ): JSONObject {
         return JSONObject().apply {
             put("action", "SELECT")
@@ -30,6 +33,15 @@ open class Repository {
                         })
                     }
                 })
+            }
+
+            orderBy?.let {
+                put("order_by", it)
+                put("order_direction", orderDirection ?: "ASC")
+            }
+
+            limit?.let {
+                put("limit", it)
             }
         }
     }
@@ -73,7 +85,10 @@ open class Repository {
         table: String,
         columns: List<String>,
         joins: List<JoinClause>,
-        where: List<WhereCondition>? = null
+        where: List<WhereCondition>? = null,
+        orderBy: String? = null,
+        orderDirection: String? = null,
+        limit: Int? = null
     ): JSONObject {
         return JSONObject().apply {
             put("action", "SELECT")
@@ -102,6 +117,15 @@ open class Repository {
                         })
                     }
                 })
+            }
+
+            orderBy?.let {
+                put("order_by", it)
+                put("order_direction", orderDirection ?: "ASC")
+            }
+
+            limit?.let {
+                put("limit", it)
             }
         }
     }

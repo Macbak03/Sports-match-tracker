@@ -85,13 +85,8 @@ fun HomeScreen(
         MatchDetailsBottomSheet(
             match = match,
             onDismiss = { selectedMatch = null },
-            onFetchEvents = { m ->
-                try {
-                    viewModel.matchesRepository.fetchMatchEvents(m)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    emptyList()
-                }
+            onFetchEvents = { match ->
+               viewModel.fetchMatchEvents(match)
             }
         )
     }

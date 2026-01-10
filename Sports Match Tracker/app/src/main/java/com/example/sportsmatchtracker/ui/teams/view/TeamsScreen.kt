@@ -14,7 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.sportsmatchtracker.model.league.Team
+import com.example.sportsmatchtracker.model.team.Team
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.ui.components.LeagueTeamsCard
 import com.example.sportsmatchtracker.ui.components.TabSelector

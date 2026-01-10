@@ -1,4 +1,4 @@
-package com.example.sportsmatchtracker.model.league
+package com.example.sportsmatchtracker.model.team
 
 import com.example.sportsmatchtracker.model.subscriptions.TeamSubscription
 

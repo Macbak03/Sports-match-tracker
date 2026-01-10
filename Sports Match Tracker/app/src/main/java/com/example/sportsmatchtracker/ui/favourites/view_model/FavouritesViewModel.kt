@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sportsmatchtracker.App
 import com.example.sportsmatchtracker.model.match.Match
+import com.example.sportsmatchtracker.model.match.MatchEvent
 import com.example.sportsmatchtracker.model.subscriptions.LeagueSubscription
 import com.example.sportsmatchtracker.model.subscriptions.TeamSubscription
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
@@ -24,7 +25,7 @@ import kotlinx.coroutines.launch
 class FavouritesViewModel(
     private val teamSubscriptionsRepository: TeamSubscriptionsRepository,
     private val leagueSubscriptionsRepository: LeagueSubscriptionsRepository,
-    private val matchesRepository: MatchesRepository,
+    val matchesRepository: MatchesRepository,
     private val authRepository: AuthRepository
 ): ViewModel() {
     private val _leaguesSubscriptions = MutableStateFlow<List<LeagueSubscription>>(emptyList())
@@ -126,5 +127,13 @@ class FavouritesViewModel(
         }.onFailure { exception ->
             println("Error fetching league matches: ${exception.message}")
         }
+    }
+
+    suspend fun fetchMatchEvents(match: Match): List<MatchEvent> {
+        return runCatching {
+            matchesRepository.fetchMatchEvents(match)
+        }.onFailure { exception ->
+            println("Error fetching match events: ${exception.message}")
+        }.getOrElse { emptyList() }
     }
 }

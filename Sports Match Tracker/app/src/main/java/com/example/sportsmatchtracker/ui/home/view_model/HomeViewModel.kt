@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sportsmatchtracker.App
 import com.example.sportsmatchtracker.model.match.Match
+import com.example.sportsmatchtracker.model.match.MatchEvent
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.ui.components.TabItem
 import com.example.sportsmatchtracker.repository.matches.MatchesRepository
@@ -17,7 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    val matchesRepository: MatchesRepository
+    private val matchesRepository: MatchesRepository
 ): ViewModel() {
 
     val matches: StateFlow<List<Match>> = matchesRepository.matchesState
@@ -75,7 +76,7 @@ class HomeViewModel(
             }
         }
     }
-    private suspend fun fetchSports() {
+    private fun fetchSports() = viewModelScope.launch {
         runCatching {
             _sports.value = matchesRepository.getSports()
         }.onFailure { exception ->
@@ -91,4 +92,11 @@ class HomeViewModel(
         _tabItems.value = tabs
     }
 
+    suspend fun fetchMatchEvents(match: Match): List<MatchEvent> {
+        return runCatching {
+            matchesRepository.fetchMatchEvents(match)
+        }.onFailure { exception ->
+            println("Error fetching match events: ${exception.message}")
+        }.getOrElse { emptyList() }
+    }
 }
