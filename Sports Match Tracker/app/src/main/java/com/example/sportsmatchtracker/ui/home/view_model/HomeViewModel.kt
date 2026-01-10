@@ -76,7 +76,7 @@ class HomeViewModel(
             }
         }
     }
-    private fun fetchSports() = viewModelScope.launch {
+    private suspend fun fetchSports() {
         runCatching {
             _sports.value = matchesRepository.getSports()
         }.onFailure { exception ->
@@ -99,4 +99,5 @@ class HomeViewModel(
             println("Error fetching match events: ${exception.message}")
         }.getOrElse { emptyList() }
     }
+
 }
