@@ -8,11 +8,15 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sportsmatchtracker.App
 import com.example.sportsmatchtracker.model.league.League
+import com.example.sportsmatchtracker.model.match.Match
+import com.example.sportsmatchtracker.model.match.MatchResult
+import com.example.sportsmatchtracker.model.match.MatchStatus
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.model.subscriptions.LeagueSubscription
 import com.example.sportsmatchtracker.model.subscriptions.TeamSubscription
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.repository.leagues.LeaguesRepository
+import com.example.sportsmatchtracker.repository.matches.MatchesRepository
 import com.example.sportsmatchtracker.repository.subscriptions.LeagueSubscriptionsRepository
 import com.example.sportsmatchtracker.repository.subscriptions.TeamSubscriptionsRepository
 import com.example.sportsmatchtracker.ui.components.TabItem
@@ -25,7 +29,8 @@ class TeamsViewModel(
     private val leaguesRepository: LeaguesRepository,
     private val teamSubscriptionsRepository: TeamSubscriptionsRepository,
     private val leagueSubscriptionsRepository: LeagueSubscriptionsRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val matchesRepository: MatchesRepository
 ) : ViewModel() {
     private val _leagues = MutableStateFlow<List<League>>(emptyList())
     val leagues: StateFlow<List<League>> = _leagues.asStateFlow()
@@ -47,11 +52,13 @@ class TeamsViewModel(
                 val leagueSubscriptionsRepository =
                     (this[APPLICATION_KEY] as App).leagueSubscriptionsRepository
                 val authRepository = (this[APPLICATION_KEY] as App).authRepository
+                val matchesRepository = (this[APPLICATION_KEY] as App).matchesRepository
                 TeamsViewModel(
                     leaguesRepository = teamsRepository,
                     teamSubscriptionsRepository = teamSubscriptionsRepository,
                     leagueSubscriptionsRepository = leagueSubscriptionsRepository,
-                    authRepository = authRepository
+                    authRepository = authRepository,
+                    matchesRepository = matchesRepository
                 )
             }
         }
@@ -187,5 +194,23 @@ class TeamsViewModel(
             tabs.add(TabItem(sport, sport.name))
         }
         _tabItems.value = tabs
+    }
+
+    suspend fun getNextMatch(teamName: String): Match? {
+        runCatching {
+            return matchesRepository.fetchNextMatch(teamName)
+        }.onFailure { exception ->
+            println("Error fetching next match: ${exception.message}")
+        }
+        return null
+    }
+
+    suspend fun getLastMatchesResults(teamName: String): List<MatchResult> {
+        runCatching {
+            return matchesRepository.fetchLastFiveMatchesResults(teamName)
+        }.onFailure { exception ->
+            println("Error fetching last match results: ${exception.message}")
+        }
+        return emptyList()
     }
 }

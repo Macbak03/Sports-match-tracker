@@ -30,6 +30,7 @@ open class Repository {
                             put("operator", condition.operator)
                             put("value", condition.value)
                             put("logical_operator", condition.logicalOperator.name)
+                            condition.group?.let { group -> put("group", group) }
                         })
                     }
                 })
@@ -114,6 +115,7 @@ open class Repository {
                             put("operator", condition.operator)
                             put("value", condition.value)
                             put("logical_operator", condition.logicalOperator.name)
+                            condition.group?.let { group -> put("group", group) }
                         })
                     }
                 })

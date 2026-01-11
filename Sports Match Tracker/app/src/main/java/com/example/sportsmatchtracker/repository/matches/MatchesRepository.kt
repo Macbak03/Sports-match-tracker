@@ -4,6 +4,7 @@ import com.example.sportsmatchtracker.model.league.League
 import com.example.sportsmatchtracker.model.match.Match
 import com.example.sportsmatchtracker.model.match.MatchEvent
 import com.example.sportsmatchtracker.model.sport.Sport
+import com.example.sportsmatchtracker.model.match.MatchResult
 import com.example.sportsmatchtracker.model.database.JoinClause
 import com.example.sportsmatchtracker.model.database.LogicalOperator
 import com.example.sportsmatchtracker.model.database.WhereCondition
@@ -63,7 +64,8 @@ class MatchesRepository : Repository() {
     }
 
     private suspend fun parseMatchesResponse(request: JSONObject): List<Match> {
-        val response = socketManager.sendRequestWithResponse(request) ?: throw Exception("No response from server")
+        val response = socketManager.sendRequestWithResponse(request)
+            ?: throw Exception("No response from server")
 
         try {
             val jsonResponse = JSONObject(response)
@@ -80,12 +82,15 @@ class MatchesRepository : Repository() {
                 for (i in 0 until count) {
                     try {
                         val row = data.getJSONObject(i)
-                        val localDateTime = LocalDateTime.parse(row.getString("start_date"), dateTimeFormatter)
+                        val localDateTime =
+                            LocalDateTime.parse(row.getString("start_date"), dateTimeFormatter)
                         val matchDateTime = localDateTime
                             .atZone(ZoneId.of("Europe/Warsaw"))
                             .toInstant()
-                        val seasonStartDate = LocalDate.parse(row.getString("season_start_date"), dateFormatter)
-                        val seasonEndDate = LocalDate.parse(row.getString("season_end_date"), dateFormatter)
+                        val seasonStartDate =
+                            LocalDate.parse(row.getString("season_start_date"), dateFormatter)
+                        val seasonEndDate =
+                            LocalDate.parse(row.getString("season_end_date"), dateFormatter)
                         val league = League(
                             name = row.getString("league_name"),
                             country = row.getString("league_country"),
@@ -93,18 +98,20 @@ class MatchesRepository : Repository() {
                         )
                         val events = emptyList<MatchEvent>()
 
-                        matches.add(Match(
-                            homeTeam = row.getString("home_team_name"),
-                            awayTeam = row.getString("away_team_name"),
-                            homeScore = row.optInt("home_score"),
-                            awayScore = row.optInt("away_score"),
-                            matchDateTime = matchDateTime,
-                            league = league,
-                            events = events,
-                            matchStadium = row.getString("building_name"),
-                            seasonStartDate = seasonStartDate,
-                            seasonEndDate = seasonEndDate
-                        ))
+                        matches.add(
+                            Match(
+                                homeTeam = row.getString("home_team_name"),
+                                awayTeam = row.getString("away_team_name"),
+                                homeScore = row.optInt("home_score"),
+                                awayScore = row.optInt("away_score"),
+                                matchDateTime = matchDateTime,
+                                league = league,
+                                events = events,
+                                matchStadium = row.getString("building_name"),
+                                seasonStartDate = seasonStartDate,
+                                seasonEndDate = seasonEndDate
+                            )
+                        )
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -136,13 +143,15 @@ class MatchesRepository : Repository() {
                     column = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.HOME_TEAM_NAME}",
                     operator = "=",
                     value = teamName,
-                    logicalOperator = LogicalOperator.OR
+                    logicalOperator = LogicalOperator.OR,
+                    group = "team"
                 ),
                 WhereCondition(
                     column = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.AWAY_TEAM_NAME}",
                     operator = "=",
                     value = teamName,
-                    logicalOperator = LogicalOperator.OR
+                    logicalOperator = LogicalOperator.OR,
+                    group = "team"
                 )
             )
         )
@@ -245,12 +254,13 @@ class MatchesRepository : Repository() {
         }
     }
 
-    suspend fun getSports() : List<Sport> {
+    suspend fun getSports(): List<Sport> {
         val request = selectRequest(
             table = DatabaseSchema.Sports.TABLE_NAME,
             columns = listOf(DatabaseSchema.Sports.NAME)
         )
-        val response = socketManager.sendRequestWithResponse(request) ?: throw Exception("No response from server")
+        val response = socketManager.sendRequestWithResponse(request)
+            ?: throw Exception("No response from server")
         try {
             val jsonResponse = JSONObject(response)
             val status = jsonResponse.getString("status")
@@ -275,7 +285,7 @@ class MatchesRepository : Repository() {
         }
     }
 
-    suspend fun fetchLastFiveMatches(): List<Match> {
+    suspend fun fetchLastFiveMatchesResults(teamName: String): List<MatchResult> {
         val currentDate = LocalDateTime.now()
             .atZone(ZoneId.of("Europe/Warsaw"))
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
@@ -286,7 +296,20 @@ class MatchesRepository : Repository() {
                     column = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.START_DATE}",
                     operator = "<",
                     value = currentDate,
-                    logicalOperator = LogicalOperator.AND
+                ),
+                WhereCondition(
+                    column = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.HOME_TEAM_NAME}",
+                    operator = "=",
+                    value = teamName,
+                    logicalOperator = LogicalOperator.OR,
+                    group = "team"
+                ),
+                WhereCondition(
+                    column = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.AWAY_TEAM_NAME}",
+                    operator = "=",
+                    value = teamName,
+                    logicalOperator = LogicalOperator.OR,
+                    group = "team"
                 )
             ),
             orderBy = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.START_DATE}",
@@ -295,13 +318,20 @@ class MatchesRepository : Repository() {
         )
 
         try {
-            return parseMatchesResponse(request)
+            val results = mutableListOf<MatchResult>()
+            for (match in parseMatchesResponse(request)) {
+                val result = match.getResult(teamName)
+                if (result != null) {
+                    results.add(result)
+                }
+            }
+            return results
         } catch (e: Exception) {
             throw e
         }
     }
 
-    suspend fun fetchNextMatch(): Match? {
+    suspend fun fetchNextMatch(teamName: String): Match? {
         val currentDate = LocalDateTime.now()
             .atZone(ZoneId.of("Europe/Warsaw"))
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
@@ -313,6 +343,20 @@ class MatchesRepository : Repository() {
                     operator = ">=",
                     value = currentDate,
                     logicalOperator = LogicalOperator.AND
+                ),
+                WhereCondition(
+                    column = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.HOME_TEAM_NAME}",
+                    operator = "=",
+                    value = teamName,
+                    logicalOperator = LogicalOperator.OR,
+                    group = "team"
+                ),
+                WhereCondition(
+                    column = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.AWAY_TEAM_NAME}",
+                    operator = "=",
+                    value = teamName,
+                    logicalOperator = LogicalOperator.OR,
+                    group = "team"
                 )
             ),
             orderBy = "${DatabaseSchema.Matches.TABLE_NAME}.${DatabaseSchema.Matches.START_DATE}",

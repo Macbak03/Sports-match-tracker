@@ -98,11 +98,14 @@ int executeSelect(cJSON *json, char *response)
     }
     else if (cJSON_IsArray(where))
     {
-        /* Multiple WHERE conditions with AND/OR */
+        /* Multiple WHERE conditions with AND/OR and grouping */
         int where_count = cJSON_GetArraySize(where);
         if (where_count > 0)
         {
             strcat(where_str, " WHERE ");
+            char current_group[64] = "";
+            int group_open = 0;
+
             for (int i = 0; i < where_count; i++)
             {
                 cJSON *condition = cJSON_GetArrayItem(where, i);
@@ -110,9 +113,45 @@ int executeSelect(cJSON *json, char *response)
                 cJSON *op = cJSON_GetObjectItem(condition, "operator");
                 cJSON *value = cJSON_GetObjectItem(condition, "value");
                 cJSON *logical_op = cJSON_GetObjectItem(condition, "logical_operator");
+                cJSON *group = cJSON_GetObjectItem(condition, "group");
 
                 if (cJSON_IsString(column) && cJSON_IsString(op) && cJSON_IsString(value))
                 {
+                    /* Handle group opening */
+                    if (cJSON_IsString(group))
+                    {
+                        if (strlen(current_group) == 0 || strcmp(current_group, group->valuestring) != 0)
+                        {
+                            /* Close previous group if open */
+                            if (group_open)
+                            {
+                                strcat(where_str, ")");
+                                group_open = 0;
+
+                                /* Add AND between groups */
+                                if (i < where_count)
+                                {
+                                    strcat(where_str, " AND ");
+                                }
+                            }
+
+                            /* Open new group */
+                            strcat(where_str, "(");
+                            strcpy(current_group, group->valuestring);
+                            group_open = 1;
+                        }
+                    }
+                    else if (group_open)
+                    {
+                        /* Close group if we hit a non-grouped condition */
+                        strcat(where_str, ")");
+                        group_open = 0;
+                        current_group[0] = '\0';
+
+                        /* Add AND before non-grouped condition */
+                        strcat(where_str, " AND ");
+                    }
+
                     char condition_str[256];
                     sprintf(condition_str, "%s %s '%s'",
                             column->valuestring,
@@ -130,6 +169,12 @@ int executeSelect(cJSON *json, char *response)
                         strcat(where_str, logical_operator);
                     }
                 }
+            }
+
+            /* Close any remaining open group */
+            if (group_open)
+            {
+                strcat(where_str, ")");
             }
         }
     }

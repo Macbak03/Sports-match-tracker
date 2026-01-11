@@ -5,12 +5,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -23,6 +21,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,6 +36,7 @@ import com.example.sportsmatchtracker.model.league.League
 import com.example.sportsmatchtracker.model.team.Team
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
+import java.time.LocalDate
 
 @Composable
 fun TeamsListItem(
@@ -67,19 +71,19 @@ fun TeamsListItem(
         }
 
 
-        Column(
-        ) {
-            Text(
-                text = "Next match",
-                color = Color.LightGray,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "next match",
-                color = Color.Black,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
+//        Column(
+//        ) {
+//            Text(
+//                text = "Next match",
+//                color = Color.LightGray,
+//                style = MaterialTheme.typography.bodyMedium
+//            )
+//            Text(
+//                text = nextTeamMatchDate ?: "No matches",
+//                color = if (team.nextMatchDateString == "NOW") Color.Red else Color.Black,
+//                style = MaterialTheme.typography.bodyMedium
+//            )
+//        }
 
         //Spacer(modifier = Modifier.width(16.dp))
 
@@ -198,11 +202,11 @@ fun TeamListItemPreview() {
                 listOf(
                     Team(
                         name = "Manchester City",
-                        city = "Manchester",
+                        city = "Manchester"
                     ),
                     Team(
                         name = "Manchester United",
-                        city = "Manchester",
+                        city = "Manchester"
                     )
                 )
             ),

@@ -18,6 +18,7 @@ import com.example.sportsmatchtracker.model.team.Team
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.ui.components.LeagueTeamsCard
 import com.example.sportsmatchtracker.ui.components.TabSelector
+import com.example.sportsmatchtracker.ui.components.TeamDetailsBottomSheet
 import com.example.sportsmatchtracker.ui.teams.view_model.TeamsViewModel
 
 @Composable
@@ -85,10 +86,16 @@ fun TeamsScreen(
         }
     }
 
-//    selectedTeam?.let { team ->
-//        MatchDetailsBottomSheet(
-//            team = team,
-//            onDismiss = { selectedTeam = null }
-//        )
-//    }
+    selectedTeam?.let { team ->
+        TeamDetailsBottomSheet(
+            team = team,
+            onDismiss = { selectedTeam = null },
+            fetchLastMatchResults = { team ->
+                viewModel.getLastMatchesResults(team.name)
+            },
+            fetchNextMatch = { team ->
+                viewModel.getNextMatch(team.name)
+            }
+        )
+    }
 }
