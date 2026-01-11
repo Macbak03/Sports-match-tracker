@@ -14,6 +14,7 @@ import com.example.sportsmatchtracker.ui.favourites.view_model.FavouritesViewMod
 import com.example.sportsmatchtracker.ui.home.view_model.HomeViewModel
 import com.example.sportsmatchtracker.ui.network.view_model.ConnectionViewModel
 import com.example.sportsmatchtracker.ui.settings.view_model.SettingsViewModel
+import com.example.sportsmatchtracker.ui.tables.view_model.TablesViewModel
 import com.example.sportsmatchtracker.ui.teams.view_model.TeamsViewModel
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
 
@@ -24,6 +25,8 @@ class MainActivity : ComponentActivity() {
     private val settingsViewModel: SettingsViewModel by viewModels { SettingsViewModel.Factory }
     private val teamsViewModel: TeamsViewModel by viewModels { TeamsViewModel.Factory }
     private val favouritesViewModel: FavouritesViewModel by viewModels { FavouritesViewModel.Factory }
+    private val tablesViewModel: TablesViewModel by viewModels { TablesViewModel.Factory }
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,7 +40,8 @@ class MainActivity : ComponentActivity() {
                     homeViewModel = homeViewModel,
                     settingsViewModel = settingsViewModel,
                     teamsViewModel = teamsViewModel,
-                    favouritesViewModel = favouritesViewModel
+                    favouritesViewModel = favouritesViewModel,
+                    tablesViewModel = tablesViewModel
                 )
             }
         }

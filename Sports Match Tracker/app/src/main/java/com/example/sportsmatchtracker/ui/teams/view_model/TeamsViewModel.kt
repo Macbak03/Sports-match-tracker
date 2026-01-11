@@ -10,7 +10,6 @@ import com.example.sportsmatchtracker.App
 import com.example.sportsmatchtracker.model.league.League
 import com.example.sportsmatchtracker.model.match.Match
 import com.example.sportsmatchtracker.model.match.MatchResult
-import com.example.sportsmatchtracker.model.match.MatchStatus
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.model.subscriptions.LeagueSubscription
 import com.example.sportsmatchtracker.model.subscriptions.TeamSubscription
@@ -46,7 +45,7 @@ class TeamsViewModel(
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val teamsRepository = (this[APPLICATION_KEY] as App).leaguesRepository
+                val leaguesRepository = (this[APPLICATION_KEY] as App).leaguesRepository
                 val teamSubscriptionsRepository =
                     (this[APPLICATION_KEY] as App).teamsSubscriptionsRepository
                 val leagueSubscriptionsRepository =
@@ -54,7 +53,7 @@ class TeamsViewModel(
                 val authRepository = (this[APPLICATION_KEY] as App).authRepository
                 val matchesRepository = (this[APPLICATION_KEY] as App).matchesRepository
                 TeamsViewModel(
-                    leaguesRepository = teamsRepository,
+                    leaguesRepository = leaguesRepository,
                     teamSubscriptionsRepository = teamSubscriptionsRepository,
                     leagueSubscriptionsRepository = leagueSubscriptionsRepository,
                     authRepository = authRepository,
@@ -191,7 +190,7 @@ class TeamsViewModel(
         val tabs = mutableListOf<TabItem<Sport?>>()
         tabs.add(TabItem(null, "All"))
         _sports.value.forEach { sport ->
-            tabs.add(TabItem(sport, sport.name))
+            tabs.add(TabItem(sport, sport.name.label))
         }
         _tabItems.value = tabs
     }

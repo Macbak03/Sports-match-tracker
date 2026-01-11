@@ -161,12 +161,6 @@ INSERT OR IGNORE INTO users (email, nick, password, roles_name) VALUES
     ('test@example.com', 'testUser', 'test123', 'user'),
     ('admin@example.com', 'testAdmin', 'admin123', 'admin');
 
--- Sample sports
-INSERT OR IGNORE INTO sports (name) VALUES 
-    ('Piłka nożna'),
-    ('Koszykówka'),
-    ('Siatkówka');
-
 INSERT OR IGNORE INTO roles (name) VALUES 
     ('admin'),
     ('user'),
@@ -174,9 +168,9 @@ INSERT OR IGNORE INTO roles (name) VALUES
 
 -- Sample sports
 INSERT OR IGNORE INTO sports (name) VALUES 
-    ('Piłka nożna'),
-    ('Koszykówka'),
-    ('Siatkówka');
+    ('Football'),
+    ('Basketball'),
+    ('Volleyball');
 
 -- Sample addresses
 INSERT OR IGNORE INTO adresses (street, number, city) VALUES 
@@ -209,18 +203,18 @@ INSERT OR IGNORE INTO buildings (name, street, number, city) VALUES
 
 -- Sample leagues
 INSERT OR IGNORE INTO leagues (name, country, sports_name) VALUES 
-    -- Piłka nożna
-    ('Premier League', 'England', 'Piłka nożna'),
-    ('La Liga', 'Spain', 'Piłka nożna'),
-    ('Ekstraklasa', 'Poland', 'Piłka nożna'),
-    -- Koszykówka
-    ('NBA', 'USA', 'Koszykówka'),
-    ('EuroLeague', 'Europe', 'Koszykówka'),
-    -- Siatkówka
-    ('PlusLiga', 'Poland', 'Siatkówka'),
-    ('Serie A', 'Italy', 'Siatkówka');
+    -- Football
+    ('Premier League', 'England', 'Football'),
+    ('La Liga', 'Spain', 'Football'),
+    ('Ekstraklasa', 'Poland', 'Football'),
+    -- Basketball
+    ('NBA', 'USA', 'Basketball'),
+    ('EuroLeague', 'Europe', 'Basketball'),
+    -- Volleyball
+    ('PlusLiga', 'Poland', 'Volleyball'),
+    ('Serie A', 'Italy', 'Volleyball');
 
--- Sample teams - Piłka nożna
+-- Sample teams - Football
 INSERT OR IGNORE INTO teams (name, city, league_name, league_country) VALUES 
     -- Premier League
     ('Arsenal', 'London', 'Premier League', 'England'),
@@ -249,7 +243,7 @@ INSERT OR IGNORE INTO teams (name, city, league_name, league_country) VALUES
     ('Real Madrid Basketball', 'Madrid', 'EuroLeague', 'Europe'),
     ('Barcelona Basketball', 'Barcelona', 'EuroLeague', 'Europe'),
     ('Olympiacos', 'Athens', 'EuroLeague', 'Europe'),
-    -- PlusLiga - POPRAWIONE: zmieniono z 'Siatkówka' na 'PlusLiga'
+    -- PlusLiga - 
     ('ZAKSA Kędzierzyn-Koźle', 'Kędzierzyn-Koźle', 'PlusLiga', 'Poland'),
     ('Jastrzębski Węgiel', 'Jastrzębie-Zdrój', 'PlusLiga', 'Poland'),
     ('Projekt Warszawa', 'Warsaw', 'PlusLiga', 'Poland'),

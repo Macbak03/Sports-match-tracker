@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.example.sportsmatchtracker.model.league.League
 import com.example.sportsmatchtracker.model.team.Team
 import com.example.sportsmatchtracker.model.sport.Sport
+import com.example.sportsmatchtracker.model.sport.SportName
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
 import java.time.LocalDate
 
@@ -197,7 +198,7 @@ fun TeamListItemPreview() {
                 name = "Premier League",
                 country = "England",
                 sport = Sport(
-                    name = "Football"
+                    name = SportName.FOOTBALL
                 ),
                 listOf(
                     Team(

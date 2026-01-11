@@ -87,7 +87,7 @@ class HomeViewModel(
         val tabs = mutableListOf<TabItem<Sport?>>()
         tabs.add(TabItem(null, "All"))
         _sports.value.forEach { sport ->
-            tabs.add(TabItem(sport, sport.name))
+            tabs.add(TabItem(sport, sport.name.label))
         }
         _tabItems.value = tabs
     }

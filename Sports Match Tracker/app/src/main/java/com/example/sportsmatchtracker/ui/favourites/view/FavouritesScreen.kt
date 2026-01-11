@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -62,43 +63,53 @@ fun FavouritesScreen(
             Spacer(modifier = Modifier.padding(8.dp))
         }
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(all = 10.dp)
-        ) {
-            val grouped = if (selectedTab == "teams") {
-                val subscribedTeamNames = teamSubscriptions.map { it.teamName }.toSet()
-                
-                // Group by subscribed teams
-                matches.flatMap { match ->
-                    buildList {
-                        if (match.homeTeam in subscribedTeamNames) {
-                            add(match.homeTeam to match)
+        if ((selectedTab == "teams" && teamSubscriptions.isEmpty()) || 
+            (selectedTab == "leagues" && leagueSubscriptions.isEmpty())) {
+            Text(
+                text = if (selectedTab == "teams") "No teams subscriptions" else "No league subscriptions",
+                modifier = Modifier.padding(16.dp)
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(all = 10.dp)
+            ) {
+                val grouped = if (selectedTab == "teams") {
+                    val subscribedTeamNames = teamSubscriptions.map { it.teamName }.toSet()
+                    
+                    // Group by subscribed teams
+                    matches.flatMap { match ->
+                        buildList {
+                            if (match.homeTeam in subscribedTeamNames) {
+                                add(match.homeTeam to match)
+                            }
+                            if (match.awayTeam in subscribedTeamNames) {
+                                add(match.awayTeam to match)
+                            }
                         }
-                        if (match.awayTeam in subscribedTeamNames) {
-                            add(match.awayTeam to match)
+                    }.groupBy({ it.first }, { it.second })
+                } else {
+                    val subscribedLeagues = leagueSubscriptions.map { it.leagueName to it.leagueCountry }.toSet()
+                    
+                    // Group by subscribed leagues
+                    matches.filter { match ->
+                        (match.league.name to match.league.country) in subscribedLeagues
+                    }.groupBy { it.league.name }
+                        .mapValues { it.value }
+                }
+
+                if(grouped.isNotEmpty()) {
+                    grouped.forEach { (key, teamMatches) ->
+                        item {
+                            LeagueMatchCard(
+                                leagueName = key,
+                                matches = teamMatches,
+                                onMatchClick = { match -> selectedMatch = match },
+                                modifier = Modifier.fillParentMaxWidth()
+                            )
                         }
                     }
-                }.groupBy({ it.first }, { it.second })
-            } else {
-                val subscribedLeagues = leagueSubscriptions.map { it.leagueName to it.leagueCountry }.toSet()
-                
-                // Group by subscribed leagues
-                matches.filter { match ->
-                    (match.league.name to match.league.country) in subscribedLeagues
-                }.groupBy { it.league.name }
-                    .mapValues { it.value }
-            }
-            
-            grouped.forEach { (key, teamMatches) ->
-                item {
-                    LeagueMatchCard(
-                        leagueName = key,
-                        matches = teamMatches,
-                        onMatchClick = { match -> selectedMatch = match },
-                        modifier = Modifier.fillParentMaxWidth()
-                    )
                 }
             }
         }

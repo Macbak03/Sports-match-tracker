@@ -1,5 +1,6 @@
 package com.example.sportsmatchtracker.repository.matches
 
+import com.example.sportsmatchtracker.model.formatter.CustomDateFormatter
 import com.example.sportsmatchtracker.model.league.League
 import com.example.sportsmatchtracker.model.match.Match
 import com.example.sportsmatchtracker.model.match.MatchEvent
@@ -8,6 +9,7 @@ import com.example.sportsmatchtracker.model.match.MatchResult
 import com.example.sportsmatchtracker.model.database.JoinClause
 import com.example.sportsmatchtracker.model.database.LogicalOperator
 import com.example.sportsmatchtracker.model.database.WhereCondition
+import com.example.sportsmatchtracker.model.sport.SportName
 import com.example.sportsmatchtracker.repository.DatabaseSchema
 import com.example.sportsmatchtracker.repository.Repository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +19,7 @@ import org.json.JSONObject
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import kotlin.collections.set
 
 class MatchesRepository : Repository() {
     private val _matchesState = MutableStateFlow<List<Match>>(emptyList())
@@ -76,25 +78,24 @@ class MatchesRepository : Repository() {
                 val count = jsonResponse.getInt("count")
 
                 val matches = mutableListOf<Match>()
-                val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
                 for (i in 0 until count) {
                     try {
                         val row = data.getJSONObject(i)
                         val localDateTime =
-                            LocalDateTime.parse(row.getString("start_date"), dateTimeFormatter)
+                            LocalDateTime.parse(row.getString("start_date"), CustomDateFormatter.DATE_TIME)
                         val matchDateTime = localDateTime
                             .atZone(ZoneId.of("Europe/Warsaw"))
                             .toInstant()
                         val seasonStartDate =
-                            LocalDate.parse(row.getString("season_start_date"), dateFormatter)
+                            LocalDate.parse(row.getString("season_start_date"), CustomDateFormatter.DATE)
                         val seasonEndDate =
-                            LocalDate.parse(row.getString("season_end_date"), dateFormatter)
+                            LocalDate.parse(row.getString("season_end_date"), CustomDateFormatter.DATE)
+                        val sportName = SportName.fromString(row.getString("sport_name"))
                         val league = League(
                             name = row.getString("league_name"),
                             country = row.getString("league_country"),
-                            sport = Sport(name = row.getString("sport_name"))
+                            sport = Sport(name = sportName)
                         )
                         val events = emptyList<MatchEvent>()
 
@@ -185,10 +186,9 @@ class MatchesRepository : Repository() {
     }
 
     suspend fun fetchMatchEvents(match: Match): List<MatchEvent> {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val matchStartDate = match.matchDateTime
             .atZone(ZoneId.of("Europe/Warsaw"))
-            .format(formatter)
+            .format(CustomDateFormatter.DATE_TIME)
 
 
         val request = selectRequest(
@@ -271,8 +271,9 @@ class MatchesRepository : Repository() {
                 val count = jsonResponse.getInt("count")
                 for (i in 0 until count) {
                     val row = data.getJSONObject(i)
+                    val sportName = SportName.fromString(row.getString(DatabaseSchema.Sports.NAME))
                     sports.add(
-                        Sport(name = row.getString(DatabaseSchema.Sports.NAME))
+                        Sport(name = sportName)
                     )
                 }
                 return sports
@@ -288,7 +289,7 @@ class MatchesRepository : Repository() {
     suspend fun fetchLastFiveMatchesResults(teamName: String): List<MatchResult> {
         val currentDate = LocalDateTime.now()
             .atZone(ZoneId.of("Europe/Warsaw"))
-            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+            .format(CustomDateFormatter.DATE_TIME)
 
         val request = buildMatchesRequest(
             where = listOf(
@@ -334,7 +335,7 @@ class MatchesRepository : Repository() {
     suspend fun fetchNextMatch(teamName: String): Match? {
         val currentDate = LocalDateTime.now()
             .atZone(ZoneId.of("Europe/Warsaw"))
-            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+            .format(CustomDateFormatter.DATE_TIME)
 
         val request = buildMatchesRequest(
             where = listOf(

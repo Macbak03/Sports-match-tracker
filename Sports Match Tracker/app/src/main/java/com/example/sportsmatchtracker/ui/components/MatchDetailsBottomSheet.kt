@@ -21,6 +21,7 @@ import com.example.sportsmatchtracker.model.match.MatchEvent
 import com.example.sportsmatchtracker.model.match.MatchStatus
 import com.example.sportsmatchtracker.model.league.League
 import com.example.sportsmatchtracker.model.sport.Sport
+import com.example.sportsmatchtracker.model.sport.SportName
 import com.example.sportsmatchtracker.model.team.Team
 import com.example.sportsmatchtracker.ui.tables.view.TablesScreen
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
@@ -291,7 +292,7 @@ fun MatchDetailsBottomSheetPreview() {
                     name = "Premier League",
                     country = "England",
                     sport = Sport(
-                        name = "Football"
+                        name = SportName.FOOTBALL
                     )
                 ),
                 events = listOf(
