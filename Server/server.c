@@ -23,7 +23,7 @@ sqlite3 *db = NULL;
 /* ===================== SELECT ===================== */
 int executeSelect(cJSON *json, char *response)
 {
-    char sql[8192]; // Zwiększony rozmiar dla bezpieczeństwa
+    char sql[8192];
 
     cJSON *table = cJSON_GetObjectItem(json, "table");
     if (!cJSON_IsString(table))
@@ -351,6 +351,125 @@ int executeInsert(cJSON *json, char *response)
     return 0;
 }
 
+/* ===================== UPDATE ===================== */
+int executeUpdate(cJSON *json, char *response)
+{
+    char sql[8192]; // Zwiększony rozmiar dla bezpieczeństwa
+
+    cJSON *table = cJSON_GetObjectItem(json, "table");
+    if (!cJSON_IsString(table))
+    {
+        sprintf(response, "{\"status\":\"error\",\"message\":\"Missing table name\"}");
+        return 1;
+    }
+
+    /* Columns and Values */
+    cJSON *columns = cJSON_GetObjectItem(json, "columns");
+    cJSON *values = cJSON_GetObjectItem(json, "values");
+    
+    if (!cJSON_IsArray(columns) || !cJSON_IsArray(values))
+    {
+        sprintf(response, "{\"status\":\"error\",\"message\":\"Missing columns or values array\"}");
+        return 1;
+    }
+
+    int col_count = cJSON_GetArraySize(columns);
+    int val_count = cJSON_GetArraySize(values);
+    
+    if (col_count != val_count)
+    {
+        sprintf(response, "{\"status\":\"error\",\"message\":\"Columns and values count mismatch\"}");
+        return 1;
+    }
+
+    /* Build SET clause */
+    char set_str[2048] = "";
+    for (int i = 0; i < col_count; i++)
+    {
+        cJSON *col = cJSON_GetArrayItem(columns, i);
+        cJSON *val = cJSON_GetArrayItem(values, i);
+
+        if (cJSON_IsString(col) && cJSON_IsString(val))
+        {
+            if (i > 0)
+                strcat(set_str, ", ");
+            
+            char set_clause[256];
+            sprintf(set_clause, "%s = '%s'", col->valuestring, val->valuestring);
+            strcat(set_str, set_clause);
+        }
+    }
+
+    /* WHERE */
+    char where_str[2048] = "";
+    cJSON *where = cJSON_GetObjectItem(json, "where");
+    if (cJSON_IsArray(where))
+    {
+        int where_count = cJSON_GetArraySize(where);
+        if (where_count > 0)
+        {
+            strcat(where_str, " WHERE ");
+            for (int i = 0; i < where_count; i++)
+            {
+                cJSON *condition = cJSON_GetArrayItem(where, i);
+                cJSON *column = cJSON_GetObjectItem(condition, "column");
+                cJSON *op = cJSON_GetObjectItem(condition, "operator");
+                cJSON *value = cJSON_GetObjectItem(condition, "value");
+                cJSON *logical_op = cJSON_GetObjectItem(condition, "logical_operator");
+
+                if (cJSON_IsString(column) && cJSON_IsString(op) && cJSON_IsString(value))
+                {
+                    char condition_str[256];
+                    sprintf(condition_str, "%s %s '%s'",
+                            column->valuestring,
+                            op->valuestring,
+                            value->valuestring);
+                    strcat(where_str, condition_str);
+
+                    if (i < where_count - 1)
+                    {
+                        const char *logical_operator = " AND ";
+                        if (cJSON_IsString(logical_op) && strcmp(logical_op->valuestring, "OR") == 0)
+                        {
+                            logical_operator = " OR ";
+                        }
+                        strcat(where_str, logical_operator);
+                    }
+                }
+            }
+        }
+    }
+
+    snprintf(sql, sizeof(sql), "UPDATE %s SET %s%s",
+             table->valuestring, set_str, where_str);
+    printf("Executing SQL: %s\n", sql);
+
+    pthread_mutex_lock(&lock);
+
+    char *errMsg = NULL;
+    int rc = sqlite3_exec(db, sql, NULL, NULL, &errMsg);
+
+    if (rc != SQLITE_OK)
+    {
+        sprintf(response,
+                "{\"status\":\"error\",\"message\":\"Update failed: %s\"}",
+                errMsg ? errMsg : sqlite3_errmsg(db));
+        if (errMsg)
+            sqlite3_free(errMsg);
+        pthread_mutex_unlock(&lock);
+        return 1;
+    }
+
+    int updatedRows = sqlite3_changes(db);
+
+    sprintf(response,
+            "{\"status\":\"success\",\"message\":\"updated\",\"rows\":%d}",
+            updatedRows);
+    printf("Response JSON: %s\n", response);
+    pthread_mutex_unlock(&lock);
+    return 0;
+}
+
 /* ===================== DELETE ===================== */
 int executeDelete(cJSON *json, char *response)
 {
@@ -473,6 +592,10 @@ void process_sql_request(char *json_message, char *response)
     else if (strcmp(action->valuestring, "INSERT") == 0)
     {
         executeInsert(json, response);
+    }
+    else if (strcmp(action->valuestring, "UPDATE") == 0)
+    {
+        executeUpdate(json, response);
     }
     else if (strcmp(action->valuestring, "DELETE") == 0)
     {
