@@ -166,6 +166,9 @@ class AuthRepository : Repository() {
         }
     }
 
+    fun setUserState(user: User?) {
+        _userState.value = user
+    }
     fun logout() {
         _userState.value = null
     }

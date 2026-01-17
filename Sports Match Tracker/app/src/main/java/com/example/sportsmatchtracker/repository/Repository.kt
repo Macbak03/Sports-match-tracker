@@ -60,6 +60,33 @@ open class Repository {
         }
     }
 
+    protected fun updateRequest(
+        table: String,
+        columns: List<String>,
+        values: List<Any>,
+        where: List<WhereCondition>? = null
+    ): JSONObject {
+        return JSONObject().apply {
+            put("action", "UPDATE")
+            put("table", table)
+            put("columns", JSONArray(columns))
+            put("values", JSONArray(values))
+
+            where?.let {
+                put("where", JSONArray().apply {
+                    it.forEach { condition ->
+                        put(JSONObject().apply {
+                            put("column", condition.column)
+                            put("operator", condition.operator)
+                            put("value", condition.value)
+                            put("logical_operator", condition.logicalOperator.name)
+                        })
+                    }
+                })
+            }
+        }
+    }
+
     protected fun deleteRequest(
         table: String,
         where: List<WhereCondition>? = null

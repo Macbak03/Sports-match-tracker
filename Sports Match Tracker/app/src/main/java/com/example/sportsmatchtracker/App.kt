@@ -6,6 +6,7 @@ import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.repository.client.ClientRepository
 import com.example.sportsmatchtracker.repository.leagues.LeaguesRepository
 import com.example.sportsmatchtracker.repository.seasons.SeasonsRepository
+import com.example.sportsmatchtracker.repository.settings.SettingsRepository
 import com.example.sportsmatchtracker.repository.subscriptions.LeagueSubscriptionsRepository
 import com.example.sportsmatchtracker.repository.subscriptions.TeamSubscriptionsRepository
 import com.example.sportsmatchtracker.repository.tables.TablesRepository
@@ -38,5 +39,9 @@ class App: Application() {
 
     val tablesRepository: TablesRepository by lazy {
         TablesRepository()
+    }
+
+    val settingsRepository: SettingsRepository by lazy {
+        SettingsRepository()
     }
 }
