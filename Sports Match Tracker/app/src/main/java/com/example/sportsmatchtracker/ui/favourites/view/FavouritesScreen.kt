@@ -25,25 +25,34 @@ import kotlin.collections.component2
 
 @Composable
 fun FavouritesScreen(
-    viewModel: FavouritesViewModel
+    viewModel: FavouritesViewModel,
+    searchQuery: String
 ) {
     LaunchedEffect(Unit) {
         viewModel.initialize()
     }
 
+    val teamResults by viewModel.teamSearchResults.collectAsState()
+    val leagueResults by viewModel.leagueSearchResults.collectAsState()
     val teamMatches by viewModel.teamMatches.collectAsState()
     val leagueMatches by viewModel.leagueMatches.collectAsState()
-    val teamSubscriptions by viewModel.teamsSubscriptions.collectAsState()
-    val leagueSubscriptions by viewModel.leaguesSubscriptions.collectAsState()
+
+    val teamSubscriptions =
+        if (searchQuery.isBlank())
+            viewModel.teamsSubscriptions.collectAsState().value
+        else
+            teamResults
+
+    val leagueSubscriptions =
+        if (searchQuery.isBlank())
+            viewModel.leaguesSubscriptions.collectAsState().value
+        else
+            leagueResults
+
 
     var selectedMatch by remember { mutableStateOf<Match?>(null) }
 
     var selectedTab: String? by remember { mutableStateOf("teams")}
-
-    var searchQuery by remember { mutableStateOf("") }
-
-    val teamResults by viewModel.teamSearchResults.collectAsState()
-    val leagueResults by viewModel.leagueSearchResults.collectAsState()
 
     val matches = if (selectedTab == "teams") teamMatches else leagueMatches
 
@@ -55,6 +64,9 @@ fun FavouritesScreen(
             viewModel.fetchLeagueMatches()
         }
     }
+    LaunchedEffect(searchQuery, selectedTab) {
+        viewModel.search(searchQuery)
+    }
 
     Column() {
         if (viewModel.tabItems.isNotEmpty()) {
@@ -63,8 +75,10 @@ fun FavouritesScreen(
                 selectedTab = selectedTab,
                 onTabSelected = { tab ->
                     selectedTab = tab
+                    viewModel.setTab(tab ?: "teams")
                 }
             )
+
             Spacer(modifier = Modifier.padding(8.dp))
         }
 
@@ -75,6 +89,26 @@ fun FavouritesScreen(
                 modifier = Modifier.padding(16.dp)
             )
         } else {
+            val filteredMatches = if (searchQuery.isBlank()) {
+                matches
+            } else {
+                if (selectedTab == "teams") {
+                    matches.filter { match ->
+                        teamResults.any { team ->
+                            match.homeTeam == team.teamName||
+                                    match.awayTeam == team.teamName
+                        }
+                    }
+                } else {
+                    matches.filter { match ->
+                        leagueResults.any { league ->
+                            match.league.name == league.leagueName
+                        }
+                    }
+                }
+            }
+
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -82,9 +116,8 @@ fun FavouritesScreen(
             ) {
                 val grouped = if (selectedTab == "teams") {
                     val subscribedTeamNames = teamSubscriptions.map { it.teamName }.toSet()
-                    
-                    // Group by subscribed teams
-                    matches.flatMap { match ->
+
+                    filteredMatches.flatMap { match ->
                         buildList {
                             if (match.homeTeam in subscribedTeamNames) {
                                 add(match.homeTeam to match)
@@ -96,12 +129,12 @@ fun FavouritesScreen(
                     }.groupBy({ it.first }, { it.second })
                 } else {
                     val subscribedLeagues = leagueSubscriptions.map { it.leagueName to it.leagueCountry }.toSet()
-                    
-                    // Group by subscribed leagues
-                    matches.filter { match ->
-                        (match.league.name to match.league.country) in subscribedLeagues
-                    }.groupBy { it.league.name }
-                        .mapValues { it.value }
+
+                    filteredMatches
+                        .filter { match ->
+                            (match.league.name to match.league.country) in subscribedLeagues
+                        }
+                        .groupBy { it.league.name }
                 }
 
                 if(grouped.isNotEmpty()) {

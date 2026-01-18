@@ -86,6 +86,10 @@ fun AppNavigation(
     // Reset search query when route changes
     LaunchedEffect(currentRoute) {
         searchQuery = ""
+
+        when (currentRoute) {
+            Screen.Home.route -> homeViewModel.clearSearch()
+        }
     }
 
     val showBar = currentRoute in mainRoutes
@@ -101,6 +105,7 @@ fun AppNavigation(
                         when (currentRoute) {
                             Screen.Home.route -> homeViewModel.search(query)
                             Screen.Teams.route -> teamsViewModel.search(query)
+                            Screen.Favourites.route -> favouritesViewModel.search(query)
                         }
                     },
                     onNavigateToSettings = {
@@ -165,7 +170,8 @@ fun AppNavigation(
             composable(Screen.Favourites.route) {
                 user?.let {
                     FavouritesScreen(
-                        viewModel = favouritesViewModel
+                        viewModel = favouritesViewModel,
+                        searchQuery = searchQuery
                     )
                 }
             }

@@ -50,8 +50,9 @@ class FavouritesViewModel(
         TabItem("leagues", "Leagues")
     )
 
-    private val _teamSearchResults = MutableStateFlow<List<Team>>(emptyList())
-    val teamSearchResults: StateFlow<List<Team>> = _teamSearchResults.asStateFlow()
+    private val _teamSearchResults = MutableStateFlow<List<TeamSubscription>>(emptyList())
+
+    val teamSearchResults: StateFlow<List<TeamSubscription>> = _teamSearchResults.asStateFlow()
 
     private val _leagueSearchResults = MutableStateFlow<List<LeagueSubscription>>(emptyList())
     val leagueSearchResults: StateFlow<List<LeagueSubscription>> = _leagueSearchResults.asStateFlow()
@@ -59,6 +60,9 @@ class FavouritesViewModel(
 
     private val _isSearching = MutableStateFlow(false)
     val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    private val _selectedTab = MutableStateFlow("teams")
+    val selectedTab: StateFlow<String> = _selectedTab.asStateFlow()
 
     private var searchJob: Job? = null
 
@@ -102,6 +106,9 @@ class FavouritesViewModel(
         }
     }
 
+    fun setTab(tab: String) {
+        _selectedTab.value = tab
+    }
     private fun fetchTeamsSubscriptions() = viewModelScope.launch {
         val userEmail = authRepository.userState.value?.email ?: return@launch
         runCatching {
@@ -154,28 +161,20 @@ class FavouritesViewModel(
         }.getOrElse { emptyList() }
     }
 
-    fun search(query: String, tab: String) {
+    fun search(query: String) {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            when(tab) {
-                "teams" -> {
-                    val allTeamsSubs = _teamsSubscriptions.value
+            when (_selectedTab.value) {
 
+                "teams" -> {
                     liveSearch(
-                        list = allTeamsSubs,
+                        list = _teamsSubscriptions.value,
                         query = query,
                         selector = { it.teamName },
-                        onResult = { filteredSubs ->
-                            val filteredTeams = filteredSubs.map { sub ->
-                                Team(
-                                    name = sub.teamName,
-                                    isSubscribed = true,
-                                    city = "")
-                            }
-                            _teamSearchResults.value = filteredTeams
-                        }
+                        onResult = { _teamSearchResults.value = it }
                     )
                 }
+
                 "leagues" -> {
                     liveSearch(
                         list = _leaguesSubscriptions.value,
@@ -187,6 +186,5 @@ class FavouritesViewModel(
             }
         }
     }
-
 
 }

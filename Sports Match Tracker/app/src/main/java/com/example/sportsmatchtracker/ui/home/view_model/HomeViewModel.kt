@@ -131,5 +131,9 @@ class HomeViewModel(
         }
     }
 
+    fun clearSearch() {
+        _searchResults.value = matches.value
+        _isSearching.value = false
+    }
 
 }
