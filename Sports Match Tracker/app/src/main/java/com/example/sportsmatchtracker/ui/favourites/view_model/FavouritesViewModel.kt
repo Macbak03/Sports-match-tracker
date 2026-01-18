@@ -11,12 +11,17 @@ import com.example.sportsmatchtracker.model.match.Match
 import com.example.sportsmatchtracker.model.match.MatchEvent
 import com.example.sportsmatchtracker.model.subscriptions.LeagueSubscription
 import com.example.sportsmatchtracker.model.subscriptions.TeamSubscription
+import com.example.sportsmatchtracker.model.team.Team
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.repository.matches.MatchesRepository
 import com.example.sportsmatchtracker.repository.subscriptions.LeagueSubscriptionsRepository
 import com.example.sportsmatchtracker.repository.subscriptions.TeamSubscriptionsRepository
 import com.example.sportsmatchtracker.ui.auth.view_model.AuthViewModel
 import com.example.sportsmatchtracker.ui.components.TabItem
+import com.example.sportsmatchtracker.ui.utils.filterList
+import com.example.sportsmatchtracker.ui.utils.liveSearch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,6 +49,18 @@ class FavouritesViewModel(
         TabItem("teams", "Teams"),
         TabItem("leagues", "Leagues")
     )
+
+    private val _teamSearchResults = MutableStateFlow<List<Team>>(emptyList())
+    val teamSearchResults: StateFlow<List<Team>> = _teamSearchResults.asStateFlow()
+
+    private val _leagueSearchResults = MutableStateFlow<List<LeagueSubscription>>(emptyList())
+    val leagueSearchResults: StateFlow<List<LeagueSubscription>> = _leagueSearchResults.asStateFlow()
+
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    private var searchJob: Job? = null
 
     // Inject dependencies
     companion object {
@@ -136,4 +153,40 @@ class FavouritesViewModel(
             println("Error fetching match events: ${exception.message}")
         }.getOrElse { emptyList() }
     }
+
+    fun search(query: String, tab: String) {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            when(tab) {
+                "teams" -> {
+                    val allTeamsSubs = _teamsSubscriptions.value
+
+                    liveSearch(
+                        list = allTeamsSubs,
+                        query = query,
+                        selector = { it.teamName },
+                        onResult = { filteredSubs ->
+                            val filteredTeams = filteredSubs.map { sub ->
+                                Team(
+                                    name = sub.teamName,
+                                    isSubscribed = true,
+                                    city = "")
+                            }
+                            _teamSearchResults.value = filteredTeams
+                        }
+                    )
+                }
+                "leagues" -> {
+                    liveSearch(
+                        list = _leaguesSubscriptions.value,
+                        query = query,
+                        selector = { it.leagueName },
+                        onResult = { _leagueSearchResults.value = it }
+                    )
+                }
+            }
+        }
+    }
+
+
 }

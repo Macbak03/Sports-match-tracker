@@ -96,15 +96,17 @@ fun AppNavigation(
                 TopBar(
                     currentRoute = currentRoute,
                     searchQuery = searchQuery,
-                    onSearchQueryChange = { searchQuery = it },
+                    onSearchQueryChange = { query ->
+                        searchQuery = query
+                        when (currentRoute) {
+                            Screen.Home.route -> homeViewModel.search(query)
+                            Screen.Teams.route -> teamsViewModel.search(query)
+                        }
+                    },
                     onNavigateToSettings = {
                         navController.navigate(Screen.Settings.route)
                     },
-                    onSearch = {
-                        when (currentRoute) {
-                            //Screen.Home.route -> homeViewModel.search(searchQuery)
-                        }
-                    }
+                    showSearch = currentRoute != Screen.Tables.route,
                 )
             }
         },
@@ -154,7 +156,8 @@ fun AppNavigation(
             composable(Screen.Teams.route) {
                 user?.let {
                     TeamsScreen(
-                        viewModel = teamsViewModel
+                        viewModel = teamsViewModel,
+                        searchQuery = searchQuery
                     )
                 }
             }
@@ -179,7 +182,12 @@ fun AppNavigation(
                 user?.let {
                     SettingsScreen(
                         user = it,
-                        viewModel = settingsViewModel
+                        viewModel = settingsViewModel,
+                        onBackToHome = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
+                        }
                     )
                 }
             }

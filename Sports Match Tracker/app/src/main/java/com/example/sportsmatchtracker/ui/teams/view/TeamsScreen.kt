@@ -23,7 +23,8 @@ import com.example.sportsmatchtracker.ui.teams.view_model.TeamsViewModel
 
 @Composable
 fun TeamsScreen(
-    viewModel: TeamsViewModel
+    viewModel: TeamsViewModel,
+    searchQuery: String
 ) {
     LaunchedEffect(Unit) {
         viewModel.initialize()
@@ -33,6 +34,28 @@ fun TeamsScreen(
     val tabItems by viewModel.tabItems.collectAsState()
     var selectedSport by remember { mutableStateOf<Sport?>(null) }
     var selectedTeam by remember { mutableStateOf<Team?>(null) }
+    val teams by viewModel.searchResults.collectAsState(initial = emptyList())
+    val isSearching by viewModel.isSearching.collectAsState()
+
+    val filteredLeagues = remember(leagues, teams, selectedSport, searchQuery) {
+        val teamNames = teams.map { it.name }.toSet()
+
+        leagues.mapNotNull { league ->
+            val matchingTeams = if (searchQuery.isBlank()) {
+                league.teams
+            } else {
+                league.teams.filter { it.name in teamNames }
+            }
+
+            if (selectedSport != null && league.sport != selectedSport) {
+                null
+            } else if (matchingTeams.isEmpty()) {
+                null
+            } else {
+                league.copy(teams = matchingTeams)
+            }
+        }
+    }
 
     val filteredTeams = remember(leagues, selectedSport) {
         if (selectedSport == null) {
@@ -63,8 +86,7 @@ fun TeamsScreen(
                 .fillMaxSize()
                 .padding(all = 10.dp)
         ) {
-            val grouped = filteredTeams.groupBy { it }
-            grouped.forEach { (league, _) ->
+            filteredLeagues.forEach { league ->
                 item {
                     LeagueTeamsCard(
                         league = league,
@@ -72,30 +94,32 @@ fun TeamsScreen(
                         onFavouriteLeagueClick = {
                             if (league.isSubscribed)
                                 viewModel.unsubscribeLeague(league.toSubscription())
-                            else viewModel.subscribeLeague(league.toSubscription())
+                            else
+                                viewModel.subscribeLeague(league.toSubscription())
                         },
                         onFavouriteTeamClick = { team ->
                             if (team.isSubscribed)
                                 viewModel.unsubscribeTeam(team.toSubscription())
-                            else viewModel.subscribeTeam(team.toSubscription())
+                            else
+                                viewModel.subscribeTeam(team.toSubscription())
                         },
                         modifier = Modifier.fillParentMaxWidth()
                     )
                 }
             }
         }
-    }
 
-    selectedTeam?.let { team ->
-        TeamDetailsBottomSheet(
-            team = team,
-            onDismiss = { selectedTeam = null },
-            fetchLastMatchResults = { team ->
-                viewModel.getLastMatchesResults(team.name)
-            },
-            fetchNextMatch = { team ->
-                viewModel.getNextMatch(team.name)
-            }
-        )
+        selectedTeam?.let { team ->
+            TeamDetailsBottomSheet(
+                team = team,
+                onDismiss = { selectedTeam = null },
+                fetchLastMatchResults = { team ->
+                    viewModel.getLastMatchesResults(team.name)
+                },
+                fetchNextMatch = { team ->
+                    viewModel.getNextMatch(team.name)
+                }
+            )
+        }
     }
 }

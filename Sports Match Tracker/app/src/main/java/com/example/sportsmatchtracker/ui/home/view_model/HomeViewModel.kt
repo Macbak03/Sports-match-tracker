@@ -12,6 +12,8 @@ import com.example.sportsmatchtracker.model.match.MatchEvent
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.ui.components.TabItem
 import com.example.sportsmatchtracker.repository.matches.MatchesRepository
+import com.example.sportsmatchtracker.ui.utils.filterList
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +31,13 @@ class HomeViewModel(
     private val _tabItems = MutableStateFlow<List<TabItem<Sport?>>>(emptyList())
     val tabItems: StateFlow<List<TabItem<Sport?>>> = _tabItems.asStateFlow()
 
+    private val _searchResults = MutableStateFlow<List<Match>>(emptyList())
+    val searchResults: StateFlow<List<Match>> = _searchResults.asStateFlow()
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    private var searchJob: kotlinx.coroutines.Job? = null
     private var isInitialized = false
 
     init {
@@ -63,7 +72,9 @@ class HomeViewModel(
             fetchSports()
             setTabItems()
             refreshMatches()
+            _searchResults.value = matches.value
             isInitialized = true
+
         }
     }
 
@@ -71,6 +82,7 @@ class HomeViewModel(
         viewModelScope.launch {
             try {
                 matchesRepository.fetchMatches()
+                _searchResults.value = matches.value
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -99,5 +111,25 @@ class HomeViewModel(
             println("Error fetching match events: ${exception.message}")
         }.getOrElse { emptyList() }
     }
+
+    fun search(query: String) {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            _isSearching.value = true
+            try {
+                delay(300) // debounce
+                val allMatches = matches.value
+                _searchResults.value = filterList(allMatches, query) { match ->
+                    "${match.homeTeam} ${match.awayTeam}"
+                }
+            } catch (e: Exception) {
+                println("Search error: ${e.message}")
+                _searchResults.value = emptyList()
+            } finally {
+                _isSearching.value = false
+            }
+        }
+    }
+
 
 }

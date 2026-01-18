@@ -13,12 +13,15 @@ import com.example.sportsmatchtracker.model.match.MatchResult
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.model.subscriptions.LeagueSubscription
 import com.example.sportsmatchtracker.model.subscriptions.TeamSubscription
+import com.example.sportsmatchtracker.model.team.Team
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.repository.leagues.LeaguesRepository
 import com.example.sportsmatchtracker.repository.matches.MatchesRepository
 import com.example.sportsmatchtracker.repository.subscriptions.LeagueSubscriptionsRepository
 import com.example.sportsmatchtracker.repository.subscriptions.TeamSubscriptionsRepository
 import com.example.sportsmatchtracker.ui.components.TabItem
+import com.example.sportsmatchtracker.ui.utils.filterList
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,6 +43,13 @@ class TeamsViewModel(
     private val _tabItems = MutableStateFlow<List<TabItem<Sport?>>>(emptyList())
     val tabItems: StateFlow<List<TabItem<Sport?>>> = _tabItems.asStateFlow()
 
+    private val _searchResults = MutableStateFlow<List<Team>>(emptyList())
+    val searchResults: StateFlow<List<Team>> = _searchResults.asStateFlow()
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    private var searchJob: kotlinx.coroutines.Job? = null
     private var isInitialized = false
 
     companion object {
@@ -91,6 +101,7 @@ class TeamsViewModel(
             setTabItems()
             fetchSubscriptions()
             fetchLeagues()
+            _searchResults.value = _leagues.value.flatMap { it.teams }
             isInitialized = true
         }
     }
@@ -212,4 +223,27 @@ class TeamsViewModel(
         }
         return emptyList()
     }
+
+    fun search(query: String) {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            _isSearching.value = true
+            try {
+                delay(300)
+
+                val allTeams = _leagues.value.flatMap { it.teams }
+
+                _searchResults.value = filterList(allTeams, query) { team ->
+                    team.name
+                }
+
+            } catch (e: Exception) {
+                println("Search error: ${e.message}")
+                _searchResults.value = emptyList()
+            } finally {
+                _isSearching.value = false
+            }
+        }
+    }
+
 }

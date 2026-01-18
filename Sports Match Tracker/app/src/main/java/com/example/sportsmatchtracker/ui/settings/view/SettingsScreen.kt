@@ -4,7 +4,6 @@ package com.example.sportsmatchtracker.ui.settings.view
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,22 +20,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.sportsmatchtracker.model.user.User
-import com.example.sportsmatchtracker.repository.auth.AuthRepository
-import com.example.sportsmatchtracker.repository.settings.SettingsRepository
-import com.example.sportsmatchtracker.ui.auth.view.AuthScreen
-import com.example.sportsmatchtracker.ui.auth.view_model.AuthViewModel
 import com.example.sportsmatchtracker.ui.settings.view_model.SettingsViewModel
-import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
 
 @Composable
 fun SettingsScreen(
     user: User,
-    viewModel: SettingsViewModel
+    viewModel: SettingsViewModel,
+    onBackToHome: () -> Unit
 ) {
 
     val user by viewModel.user.collectAsState()
@@ -119,6 +112,12 @@ fun SettingsScreen(
             onClick = { viewModel.logout() }
         ) {
             Text("Sign out")
+        }
+        Button(
+            modifier = Modifier.size(width = 250.dp, height = 40.dp),
+            onClick = { onBackToHome() }
+        ) {
+            Text("Back to Home")
         }
     }
 }

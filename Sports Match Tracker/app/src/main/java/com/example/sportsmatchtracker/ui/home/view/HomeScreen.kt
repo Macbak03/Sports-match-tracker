@@ -32,7 +32,7 @@ fun HomeScreen(
         viewModel.initialize()
     }
 
-    val matches by viewModel.matches.collectAsState()
+    val matches by viewModel.searchResults.collectAsState(initial = emptyList())
     val tabItems by viewModel.tabItems.collectAsState()
     var selectedSport by remember { mutableStateOf<Sport?>(null) }
     var selectedMatch by remember { mutableStateOf<Match?>(null) }

@@ -40,6 +40,11 @@ fun FavouritesScreen(
 
     var selectedTab: String? by remember { mutableStateOf("teams")}
 
+    var searchQuery by remember { mutableStateOf("") }
+
+    val teamResults by viewModel.teamSearchResults.collectAsState()
+    val leagueResults by viewModel.leagueSearchResults.collectAsState()
+
     val matches = if (selectedTab == "teams") teamMatches else leagueMatches
 
     // Fetch matches when lists are ready and selected tab changes
