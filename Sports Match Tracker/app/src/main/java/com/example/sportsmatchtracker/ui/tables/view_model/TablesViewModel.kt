@@ -76,6 +76,11 @@ class TablesViewModel(
         }
     }
 
+    fun refresh() {
+        isInitialized = false
+        initialize()
+    }
+
     suspend fun fetchSeasonsForLeague(league: League) {
         runCatching {
             _seasons.value = seasonsRepository.fetchSeasonsForLeague(league)

@@ -1,8 +1,11 @@
 package com.example.sportsmatchtracker.ui.home.view
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,6 +27,7 @@ import com.example.sportsmatchtracker.ui.components.MatchDetailsBottomSheet
 import com.example.sportsmatchtracker.ui.home.view_model.HomeViewModel
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel
@@ -36,6 +40,7 @@ fun HomeScreen(
     val tabItems by viewModel.tabItems.collectAsState()
     var selectedSport by remember { mutableStateOf<Sport?>(null) }
     var selectedMatch by remember { mutableStateOf<Match?>(null) }
+    var isRefreshing by remember { mutableStateOf(false) }
 
     val filteredMatches = remember(matches, selectedSport) {
         if (selectedSport == null) {
@@ -45,7 +50,15 @@ fun HomeScreen(
         }
     }
 
-    Column() {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            viewModel.refresh()
+            isRefreshing = false
+        }
+    ) {
+        Column() {
         if (tabItems.isNotEmpty()) {
             TabSelector(
                 tabs = tabItems,
@@ -80,6 +93,7 @@ fun HomeScreen(
             }
         }
     }
+    }
 
     selectedMatch?.let { match ->
         MatchDetailsBottomSheet(
@@ -92,6 +106,7 @@ fun HomeScreen(
     }
 }
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ConnectPreview() {

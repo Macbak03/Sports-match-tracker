@@ -12,7 +12,7 @@ import org.json.JSONObject
 
 class TablesRepository: Repository() {
 
-    suspend fun fetchSeasonTable(season: Season, league: League): List<TableStanding> {
+    suspend fun fetchSeasonTable(season: Season, league: League): List<TableStanding> = withConnectionCheck {
         val request = selectWithJoinRequest(
             table = DatabaseSchema.PositionsInTable.TABLE_NAME,
             columns = listOf(
@@ -84,7 +84,7 @@ class TablesRepository: Repository() {
                     )
                 }
             }
-            return tableStandings
+            tableStandings
         } catch (e: Exception) {
             e.printStackTrace()
             throw e

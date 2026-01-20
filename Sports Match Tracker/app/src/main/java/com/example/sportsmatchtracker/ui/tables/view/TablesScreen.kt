@@ -3,6 +3,8 @@ package com.example.sportsmatchtracker.ui.tables.view
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -30,6 +32,7 @@ import com.example.sportsmatchtracker.ui.tables.view_model.TablesViewModel
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TablesScreen(
     viewModel: TablesViewModel
@@ -47,6 +50,7 @@ fun TablesScreen(
     var selectedLeague by remember { mutableStateOf<League?>(null) }
     var selectedSeason by remember { mutableStateOf<Season?>(null) }
     var selectedTeam by remember { mutableStateOf<Team?>(null) }
+    var isRefreshing by remember { mutableStateOf(false) }
 
 
     LaunchedEffect(selectedLeague) {
@@ -75,8 +79,16 @@ fun TablesScreen(
         }
     }
 
-    Column(
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            viewModel.refresh()
+            isRefreshing = false
+        }
     ) {
+        Column(
+        ) {
         if (sportTabItems.isNotEmpty()) {
             TabSelector(
                 tabs = sportTabItems as List<TabItem<Sport?>>,
@@ -118,6 +130,7 @@ fun TablesScreen(
             },
             modifier = Modifier.padding(horizontal = 16.dp)
         )
+    }
     }
 
     selectedTeam?.let { team ->

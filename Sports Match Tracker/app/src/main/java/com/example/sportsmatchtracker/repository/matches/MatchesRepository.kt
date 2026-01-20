@@ -65,7 +65,7 @@ class MatchesRepository : Repository() {
         )
     }
 
-    private suspend fun parseMatchesResponse(request: JSONObject): List<Match> {
+    private suspend fun parseMatchesResponse(request: JSONObject): List<Match> = withConnectionCheck {
         val response = socketManager.sendRequestWithResponse(request)
             ?: throw Exception("No response from server")
 
@@ -118,7 +118,7 @@ class MatchesRepository : Repository() {
                     }
                 }
 
-                return matches
+                matches
             } else {
                 throw Exception(jsonResponse.optString("message"))
             }
@@ -185,7 +185,7 @@ class MatchesRepository : Repository() {
         }
     }
 
-    suspend fun fetchMatchEvents(match: Match): List<MatchEvent> {
+    suspend fun fetchMatchEvents(match: Match): List<MatchEvent> = withConnectionCheck {
         val matchStartDate = match.matchDateTime
             .atZone(ZoneId.of("Europe/Warsaw"))
             .format(CustomDateFormatter.DATE_TIME)
@@ -226,9 +226,9 @@ class MatchesRepository : Repository() {
             )
         )
 
-        val response = socketManager.sendRequestWithResponse(request) ?: return emptyList()
+        val response = socketManager.sendRequestWithResponse(request) ?: return@withConnectionCheck emptyList()
 
-        return try {
+        try {
             val jsonResponse = JSONObject(response)
             if (jsonResponse.getString("status") == "success") {
                 val data = jsonResponse.getJSONArray("data")
@@ -254,7 +254,7 @@ class MatchesRepository : Repository() {
         }
     }
 
-    suspend fun getSports(): List<Sport> {
+    suspend fun getSports(): List<Sport> = withConnectionCheck {
         val request = selectRequest(
             table = DatabaseSchema.Sports.TABLE_NAME,
             columns = listOf(DatabaseSchema.Sports.NAME)
@@ -276,7 +276,7 @@ class MatchesRepository : Repository() {
                         Sport(name = sportName)
                     )
                 }
-                return sports
+                sports
             } else {
                 throw Exception(jsonResponse.optString("message"))
             }

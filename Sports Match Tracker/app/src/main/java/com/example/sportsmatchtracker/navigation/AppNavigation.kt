@@ -53,6 +53,14 @@ fun AppNavigation(
         Screen.Tables.route
     )
     var searchQuery by remember { mutableStateOf("") }
+    var lastMainRoute by remember { mutableStateOf<String?>(Screen.Home.route) }
+
+    // Remember the last main route (not connection or auth)
+    LaunchedEffect(currentRoute) {
+        if (currentRoute in mainRoutes) {
+            lastMainRoute = currentRoute
+        }
+    }
 
     // Handle navigation based on connection and authentication state
     LaunchedEffect(clientState.connected, user) {
@@ -73,10 +81,11 @@ fun AppNavigation(
                     }
                 }
             }
-            // Connected and authenticated -> go to home screen
+            // Connected and authenticated -> go to last visited route or home
             else -> {
-                if (navController.currentDestination?.route != Screen.Home.route) {
-                    navController.navigate(Screen.Home.route) {
+                val targetRoute = lastMainRoute ?: Screen.Home.route
+                if (navController.currentDestination?.route !in mainRoutes) {
+                    navController.navigate(targetRoute) {
                         popUpTo(Screen.Auth.route) { inclusive = true }
                     }
                 }

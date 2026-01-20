@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,6 +25,7 @@ import com.example.sportsmatchtracker.ui.favourites.view_model.FavouritesViewMod
 import kotlin.collections.component1
 import kotlin.collections.component2
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesScreen(
     viewModel: FavouritesViewModel,
@@ -52,7 +55,8 @@ fun FavouritesScreen(
 
     var selectedMatch by remember { mutableStateOf<Match?>(null) }
 
-    var selectedTab: String? by remember { mutableStateOf("teams")}
+    var selectedTab: String? by remember { mutableStateOf("teams") }
+    var isRefreshing by remember { mutableStateOf(false) }
 
     val matches = if (selectedTab == "teams") teamMatches else leagueMatches
 
@@ -68,98 +72,109 @@ fun FavouritesScreen(
         viewModel.search(searchQuery)
     }
 
-    Column() {
-        if (viewModel.tabItems.isNotEmpty()) {
-            TabSelector(
-                tabs = viewModel.tabItems,
-                selectedTab = selectedTab,
-                onTabSelected = { tab ->
-                    selectedTab = tab
-                    viewModel.setTab(tab ?: "teams")
-                }
-            )
-
-            Spacer(modifier = Modifier.padding(8.dp))
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            viewModel.refresh()
+            isRefreshing = false
         }
+    ) {
+        Column() {
+            if (viewModel.tabItems.isNotEmpty()) {
+                TabSelector(
+                    tabs = viewModel.tabItems,
+                    selectedTab = selectedTab,
+                    onTabSelected = { tab ->
+                        selectedTab = tab
+                        viewModel.setTab(tab ?: "teams")
+                    }
+                )
 
-        if ((selectedTab == "teams" && teamSubscriptions.isEmpty()) || 
-            (selectedTab == "leagues" && leagueSubscriptions.isEmpty())) {
-            Text(
-                text = if (selectedTab == "teams") "No teams subscriptions" else "No league subscriptions",
-                modifier = Modifier.padding(16.dp)
-            )
-        } else {
-            val filteredMatches = if (searchQuery.isBlank()) {
-                matches
-            } else {
-                if (selectedTab == "teams") {
-                    matches.filter { match ->
-                        teamResults.any { team ->
-                            match.homeTeam == team.teamName||
-                                    match.awayTeam == team.teamName
-                        }
-                    }
-                } else {
-                    matches.filter { match ->
-                        leagueResults.any { league ->
-                            match.league.name == league.leagueName
-                        }
-                    }
-                }
+                Spacer(modifier = Modifier.padding(8.dp))
             }
 
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(all = 10.dp)
+            if ((selectedTab == "teams" && teamSubscriptions.isEmpty()) ||
+                (selectedTab == "leagues" && leagueSubscriptions.isEmpty())
             ) {
-                val grouped = if (selectedTab == "teams") {
-                    val subscribedTeamNames = teamSubscriptions.map { it.teamName }.toSet()
-
-                    filteredMatches.flatMap { match ->
-                        buildList {
-                            if (match.homeTeam in subscribedTeamNames) {
-                                add(match.homeTeam to match)
-                            }
-                            if (match.awayTeam in subscribedTeamNames) {
-                                add(match.awayTeam to match)
-                            }
-                        }
-                    }.groupBy({ it.first }, { it.second })
+                Text(
+                    text = if (selectedTab == "teams") "No teams subscriptions" else "No league subscriptions",
+                    modifier = Modifier.padding(16.dp)
+                )
+            } else {
+                val filteredMatches = if (searchQuery.isBlank()) {
+                    matches
                 } else {
-                    val subscribedLeagues = leagueSubscriptions.map { it.leagueName to it.leagueCountry }.toSet()
-
-                    filteredMatches
-                        .filter { match ->
-                            (match.league.name to match.league.country) in subscribedLeagues
+                    if (selectedTab == "teams") {
+                        matches.filter { match ->
+                            teamResults.any { team ->
+                                match.homeTeam == team.teamName ||
+                                        match.awayTeam == team.teamName
+                            }
                         }
-                        .groupBy { it.league.name }
+                    } else {
+                        matches.filter { match ->
+                            leagueResults.any { league ->
+                                match.league.name == league.leagueName
+                            }
+                        }
+                    }
                 }
 
-                if(grouped.isNotEmpty()) {
-                    grouped.forEach { (key, teamMatches) ->
-                        item {
-                            LeagueMatchCard(
-                                leagueName = key,
-                                matches = teamMatches,
-                                onMatchClick = { match -> selectedMatch = match },
-                                modifier = Modifier.fillParentMaxWidth()
-                            )
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(all = 10.dp)
+                ) {
+                    val grouped = if (selectedTab == "teams") {
+                        val subscribedTeamNames = teamSubscriptions.map { it.teamName }.toSet()
+
+                        filteredMatches.flatMap { match ->
+                            buildList {
+                                if (match.homeTeam in subscribedTeamNames) {
+                                    add(match.homeTeam to match)
+                                }
+                                if (match.awayTeam in subscribedTeamNames) {
+                                    add(match.awayTeam to match)
+                                }
+                            }
+                        }.groupBy({ it.first }, { it.second })
+                    } else {
+                        val subscribedLeagues =
+                            leagueSubscriptions.map { it.leagueName to it.leagueCountry }.toSet()
+
+                        filteredMatches
+                            .filter { match ->
+                                (match.league.name to match.league.country) in subscribedLeagues
+                            }
+                            .groupBy { it.league.name }
+                    }
+
+                    if (grouped.isNotEmpty()) {
+                        grouped.forEach { (key, teamMatches) ->
+                            item {
+                                LeagueMatchCard(
+                                    leagueName = key,
+                                    matches = teamMatches,
+                                    onMatchClick = { match -> selectedMatch = match },
+                                    modifier = Modifier.fillParentMaxWidth()
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
 
-        selectedMatch?.let { match ->
-            MatchDetailsBottomSheet(
-                match = match,
-                onDismiss = { selectedMatch = null },
-                onFetchEvents = { match ->
-                    viewModel.fetchMatchEvents(match)
-                }
-            )
-        }
+    selectedMatch?.let { match ->
+        MatchDetailsBottomSheet(
+            match = match,
+            onDismiss = { selectedMatch = null },
+            onFetchEvents = { match ->
+                viewModel.fetchMatchEvents(match)
+            }
+        )
     }
 }

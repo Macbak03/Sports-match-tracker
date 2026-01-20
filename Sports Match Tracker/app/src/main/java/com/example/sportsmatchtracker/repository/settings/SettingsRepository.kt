@@ -15,7 +15,7 @@ class SettingsRepository : Repository(){
     val userState: StateFlow<User?> = _userState.asStateFlow()
     private val table = DatabaseSchema.Users
 
-    suspend fun updateUserNick(email: String, newNick: String) {
+    suspend fun updateUserNick(email: String, newNick: String) = withConnectionCheck {
         if (!socketManager.isConnected) {
             throw AuthError(errorMessage = "No connection to server", generalError = true)
         }

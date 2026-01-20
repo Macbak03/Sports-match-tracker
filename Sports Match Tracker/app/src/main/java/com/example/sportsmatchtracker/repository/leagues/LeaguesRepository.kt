@@ -17,7 +17,7 @@ class LeaguesRepository : Repository() {
     private val _leaguesState = MutableStateFlow<List<League>>(listOf())
     val leaguesState: StateFlow<List<League>> = _leaguesState.asStateFlow()
 
-    suspend fun fetchLeagues() {
+    suspend fun fetchLeagues() = withConnectionCheck {
         val request = selectWithJoinRequest(
             table = DatabaseSchema.Leagues.TABLE_NAME,
             columns = listOf(
@@ -41,7 +41,8 @@ class LeaguesRepository : Repository() {
             )
         )
 
-        val response = socketManager.sendRequestWithResponse(request) ?: throw Exception("No response from server")
+        val response = socketManager.sendRequestWithResponse(request)
+            ?: throw Exception("No response from server")
         try {
             val jsonResponse = JSONObject(response)
             val status = jsonResponse.getString("status")
@@ -59,19 +60,19 @@ class LeaguesRepository : Repository() {
                     val leagueName = row.getString("league_name")
                     val leagueCountry = row.getString("league_country")
                     val leagueKey = Pair(leagueName, leagueCountry)
-                    
+
                     // Add sport name for leagues
                     if (!sportsMap.containsKey(leagueKey)) {
                         val sportName = SportName.fromString(row.getString("sport_name"))
                         sportsMap[leagueKey] = Sport(name = sportName)
                     }
-                    
+
                     // add team to the league team list
                     val team = Team(
                         name = row.getString("team_name"),
                         city = row.getString("team_city")
                     )
-                    
+
                     leaguesMap.getOrPut(leagueKey) { mutableListOf() }.add(team)
                 }
 
@@ -95,12 +96,13 @@ class LeaguesRepository : Repository() {
         }
     }
 
-    suspend fun getSports() : List<Sport> {
+    suspend fun getSports(): List<Sport> = withConnectionCheck {
         val request = selectRequest(
             table = DatabaseSchema.Sports.TABLE_NAME,
             columns = listOf(DatabaseSchema.Sports.NAME)
         )
-        val response = socketManager.sendRequestWithResponse(request) ?: throw Exception("No response from server")
+        val response = socketManager.sendRequestWithResponse(request)
+            ?: throw Exception("No response from server")
         try {
             val jsonResponse = JSONObject(response)
             val status = jsonResponse.getString("status")
@@ -116,7 +118,7 @@ class LeaguesRepository : Repository() {
                         Sport(name = sportName)
                     )
                 }
-                return sports
+                sports
             } else {
                 throw Exception(jsonResponse.optString("message"))
             }
@@ -126,7 +128,7 @@ class LeaguesRepository : Repository() {
         }
     }
 
-    suspend fun fetchLeaguesForSport(sportName: String): List<League> {
+    suspend fun fetchLeaguesForSport(sportName: String): List<League> = withConnectionCheck {
         val request = selectWithJoinRequest(
             table = DatabaseSchema.Leagues.TABLE_NAME,
             columns = listOf(
@@ -157,7 +159,8 @@ class LeaguesRepository : Repository() {
             )
         )
 
-        val response = socketManager.sendRequestWithResponse(request) ?: throw Exception("No response from server")
+        val response = socketManager.sendRequestWithResponse(request)
+            ?: throw Exception("No response from server")
         try {
             val jsonResponse = JSONObject(response)
             val status = jsonResponse.getString("status")
@@ -200,8 +203,7 @@ class LeaguesRepository : Repository() {
                     )
                 }
 
-                return leagues
-
+                leagues
             } else {
                 throw Exception(jsonResponse.optString("message"))
             }
@@ -211,4 +213,5 @@ class LeaguesRepository : Repository() {
         }
     }
 }
+
 

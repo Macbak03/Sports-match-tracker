@@ -1,6 +1,7 @@
 package com.example.sportsmatchtracker
 
 import android.app.Application
+import com.example.sportsmatchtracker.repository.Repository
 import com.example.sportsmatchtracker.repository.matches.MatchesRepository
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.repository.client.ClientRepository
@@ -10,8 +11,22 @@ import com.example.sportsmatchtracker.repository.settings.SettingsRepository
 import com.example.sportsmatchtracker.repository.subscriptions.LeagueSubscriptionsRepository
 import com.example.sportsmatchtracker.repository.subscriptions.TeamSubscriptionsRepository
 import com.example.sportsmatchtracker.repository.tables.TablesRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class App: Application() {
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    
+    override fun onCreate() {
+        super.onCreate()
+        Repository.onConnectionLost = {
+            applicationScope.launch {
+                clientRepository.disconnect()
+            }
+        }
+    }
     val clientRepository: ClientRepository by lazy {
         ClientRepository()
     }

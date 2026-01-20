@@ -55,7 +55,7 @@ class AuthRepository : Repository() {
         }
     }
 
-    suspend fun login(email: String, password: String) {
+    suspend fun login(email: String, password: String) = withConnectionCheck {
         if (!socketManager.isConnected) {
             throw AuthError(errorMessage = "No connection to server", generalError = true)
         }
@@ -120,7 +120,7 @@ class AuthRepository : Repository() {
         }
     }
 
-    suspend fun register(email: String, nick: String, password: String) {
+    suspend fun register(email: String, nick: String, password: String) = withConnectionCheck {
         if (!socketManager.isConnected) {
             throw AuthError(errorMessage = "No connection to server", generalError = true)
         }

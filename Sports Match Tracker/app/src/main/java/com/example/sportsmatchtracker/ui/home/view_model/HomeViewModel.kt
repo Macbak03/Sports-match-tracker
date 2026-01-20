@@ -78,6 +78,11 @@ class HomeViewModel(
         }
     }
 
+    fun refresh() {
+        isInitialized = false
+        initialize()
+    }
+
     fun refreshMatches() {
         viewModelScope.launch {
             try {

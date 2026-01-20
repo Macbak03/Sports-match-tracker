@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -21,6 +23,7 @@ import com.example.sportsmatchtracker.ui.components.TabSelector
 import com.example.sportsmatchtracker.ui.components.TeamDetailsBottomSheet
 import com.example.sportsmatchtracker.ui.teams.view_model.TeamsViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeamsScreen(
     viewModel: TeamsViewModel,
@@ -36,6 +39,7 @@ fun TeamsScreen(
     var selectedTeam by remember { mutableStateOf<Team?>(null) }
     val searchResults by viewModel.searchResults.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
+    var isRefreshing by remember { mutableStateOf(false) }
 
     val filteredLeagues = remember(leagues, searchResults, selectedSport, searchQuery) {
         val leaguesToDisplay = if (searchQuery.isBlank()) {
@@ -49,61 +53,71 @@ fun TeamsScreen(
         }
     }
 
-    Column() {
-        if (tabItems.isNotEmpty()) {
-            TabSelector(
-                tabs = tabItems,
-                selectedTab = selectedSport ?: tabItems.first().value,
-                onTabSelected = { sport ->
-                    selectedSport = if (sport == tabItems.firstOrNull()?.value) {
-                        null
-                    } else {
-                        sport
-                    }
-                }
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            viewModel.refresh()
+            isRefreshing = false
         }
+    ) {
+        Column() {
+            if (tabItems.isNotEmpty()) {
+                TabSelector(
+                    tabs = tabItems,
+                    selectedTab = selectedSport ?: tabItems.first().value,
+                    onTabSelected = { sport ->
+                        selectedSport = if (sport == tabItems.firstOrNull()?.value) {
+                            null
+                        } else {
+                            sport
+                        }
+                    }
+                )
+                Spacer(modifier = Modifier.padding(8.dp))
+            }
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(all = 10.dp)
-        ) {
-            filteredLeagues.forEach { league ->
-                item {
-                    LeagueTeamsCard(
-                        league = league,
-                        onTeamClick = { team -> selectedTeam = team },
-                        onFavouriteLeagueClick = {
-                            if (league.isSubscribed)
-                                viewModel.unsubscribeLeague(league.toSubscription())
-                            else
-                                viewModel.subscribeLeague(league.toSubscription())
-                        },
-                        onFavouriteTeamClick = { team ->
-                            if (team.isSubscribed)
-                                viewModel.unsubscribeTeam(team.toSubscription())
-                            else
-                                viewModel.subscribeTeam(team.toSubscription())
-                        },
-                        modifier = Modifier.fillParentMaxWidth()
-                    )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(all = 10.dp)
+            ) {
+                filteredLeagues.forEach { league ->
+                    item {
+                        LeagueTeamsCard(
+                            league = league,
+                            onTeamClick = { team -> selectedTeam = team },
+                            onFavouriteLeagueClick = {
+                                if (league.isSubscribed)
+                                    viewModel.unsubscribeLeague(league.toSubscription())
+                                else
+                                    viewModel.subscribeLeague(league.toSubscription())
+                            },
+                            onFavouriteTeamClick = { team ->
+                                if (team.isSubscribed)
+                                    viewModel.unsubscribeTeam(team.toSubscription())
+                                else
+                                    viewModel.subscribeTeam(team.toSubscription())
+                            },
+                            modifier = Modifier.fillParentMaxWidth()
+                        )
+                    }
                 }
             }
         }
+    }
 
-        selectedTeam?.let { team ->
-            TeamDetailsBottomSheet(
-                team = team,
-                onDismiss = { selectedTeam = null },
-                fetchLastMatchResults = { team ->
-                    viewModel.getLastMatchesResults(team.name)
-                },
-                fetchNextMatch = { team ->
-                    viewModel.getNextMatch(team.name)
-                }
-            )
-        }
+    selectedTeam?.let { team ->
+        TeamDetailsBottomSheet(
+            team = team,
+            onDismiss = { selectedTeam = null },
+            fetchLastMatchResults = { team ->
+                viewModel.getLastMatchesResults(team.name)
+            },
+            fetchNextMatch = { team ->
+                viewModel.getNextMatch(team.name)
+            }
+        )
     }
 }
+

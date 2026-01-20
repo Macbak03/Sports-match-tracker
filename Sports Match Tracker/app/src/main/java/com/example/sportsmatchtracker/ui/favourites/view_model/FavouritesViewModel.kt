@@ -106,6 +106,10 @@ class FavouritesViewModel(
         }
     }
 
+    fun refresh() {
+        initialize()
+    }
+
     fun setTab(tab: String) {
         _selectedTab.value = tab
     }

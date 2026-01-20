@@ -105,6 +105,11 @@ class TeamsViewModel(
         }
     }
 
+    fun refresh() {
+        isInitialized = false
+        initialize()
+    }
+
     private fun updateLeaguesWithSubscriptions(rawLeagues: List<League>) {
         val leagueSubscriptions = leagueSubscriptionsRepository.subscriptionsState.value
         val teamSubscriptions = teamSubscriptionsRepository.subscriptionsState.value

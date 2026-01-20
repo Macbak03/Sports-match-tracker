@@ -8,6 +8,21 @@ import org.json.JSONObject
 
 open class Repository {
     protected val socketManager = SocketManager.getInstance()
+    
+    companion object {
+        var onConnectionLost: (() -> Unit)? = null
+    }
+    
+    protected suspend fun <T> withConnectionCheck(block: suspend () -> T): T {
+        return try {
+            block()
+        } catch (e: Exception) {
+            if (e.message?.contains("No response from server") == true) {
+                onConnectionLost?.invoke()
+            }
+            throw e
+        }
+    }
 
     protected fun selectRequest(
         table: String,

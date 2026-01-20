@@ -11,7 +11,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 class SeasonsRepository: Repository() {
-    suspend fun fetchSeasonsForLeague(league: League): List<Season> {
+    suspend fun fetchSeasonsForLeague(league: League): List<Season> = withConnectionCheck {
         val request = selectRequest(
             table = DatabaseSchema.Seasons.TABLE_NAME,
             columns = listOf(
@@ -54,7 +54,7 @@ class SeasonsRepository: Repository() {
                     )
                 }
             }
-            return seasons
+            seasons
         } catch (e: Exception) {
             e.printStackTrace()
             throw e
