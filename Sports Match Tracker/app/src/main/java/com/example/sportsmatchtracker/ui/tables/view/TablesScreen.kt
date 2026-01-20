@@ -144,7 +144,7 @@ fun TablesScreen(
 }
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun FavouritesPreview() {
+fun TablesPreview() {
     SportsMatchTrackerTheme {
         TablesScreen(viewModel = TablesViewModel(
             leaguesRepository = LeaguesRepository(),

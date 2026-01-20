@@ -196,13 +196,8 @@ fun AppNavigation(
             composable(Screen.Settings.route) {
                 user?.let {
                     SettingsScreen(
-                        user = it,
                         viewModel = settingsViewModel,
-                        onBackToHome = {
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Home.route) { inclusive = true }
-                            }
-                        }
+                        onBack = { navController.popBackStack() }
                     )
                 }
             }

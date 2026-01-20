@@ -15,13 +15,32 @@ class SettingsRepository : Repository(){
     val userState: StateFlow<User?> = _userState.asStateFlow()
     private val table = DatabaseSchema.Users
 
+    private fun parseServerError(message: String): Exception {
+        return when {
+            message.contains(
+                "UNIQUE constraint failed: users.nick",
+                ignoreCase = true
+            ) -> {
+                Exception(
+                    "Nick is already in use"
+                )
+            }
+
+            else -> {
+                Exception(
+                    "Unidentified error: $message"
+                )
+            }
+        }
+    }
+
     suspend fun updateUserNick(email: String, newNick: String) = withConnectionCheck {
         if (!socketManager.isConnected) {
-            throw AuthError(errorMessage = "No connection to server", generalError = true)
+            throw Exception("No connection to server")
         }
 
         if (newNick.isBlank()) {
-            throw AuthError(errorMessage = "Nick cannot be empty", nickError = true)
+            throw Exception("Nick cannot be empty")
         }
 
         val request = updateRequest(
@@ -31,10 +50,7 @@ class SettingsRepository : Repository(){
             where = listOf(WhereCondition(table.EMAIL, "=", email))
         )
 
-        val response = socketManager.sendRequestWithResponse(request) ?: throw AuthError(
-            errorMessage = "No response from server",
-            generalError = true
-        )
+        val response = socketManager.sendRequestWithResponse(request) ?: throw Exception("No response from server")
 
         try {
             val jsonResponse = JSONObject(response)
@@ -45,19 +61,11 @@ class SettingsRepository : Repository(){
                 _userState.value = _userState.value?.copy(nick = newNick)
             } else {
                 val errorMessage = jsonResponse.optString("message", "Unknown error")
-                throw AuthError(
-                    errorMessage = errorMessage,
-                    generalError = true
-                )
+                throw parseServerError(errorMessage)
             }
-        } catch (e: AuthError) {
-            throw e
         } catch (e: Exception) {
             e.printStackTrace()
-            throw AuthError(
-                errorMessage = "Error when trying to update nick: ${e.message}",
-                generalError = true
-            )
+            throw e
         }
     }
     fun setUserState(user: User?) {

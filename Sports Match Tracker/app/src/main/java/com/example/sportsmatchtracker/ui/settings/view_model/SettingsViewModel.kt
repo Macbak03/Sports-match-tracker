@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sportsmatchtracker.App
+import com.example.sportsmatchtracker.model.settings.NickChangeStatus
 import com.example.sportsmatchtracker.model.user.User
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.repository.settings.SettingsRepository
@@ -25,8 +26,9 @@ class SettingsViewModel(
     private val _user = MutableStateFlow<User?>(null)
     val user: StateFlow<User?> = _user.asStateFlow()
 
-    private val _updateStatus = MutableStateFlow<String?>(null)
-    val updateStatus: StateFlow<String?> = _updateStatus.asStateFlow()
+    private val _nickStatus = MutableStateFlow<NickChangeStatus?>(null)
+    val nickStatus: StateFlow<NickChangeStatus?> = _nickStatus.asStateFlow()
+
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -57,14 +59,16 @@ class SettingsViewModel(
 
     fun updateNick(newNick: String) = viewModelScope.launch {
         val email = _user.value?.email ?: return@launch
-        
-        try {
+        runCatching {
             settingsRepository.updateUserNick(email, newNick)
             _user.value = _user.value?.copy(nick = newNick)
-            _updateStatus.value = "Nick updated successfully"
-        } catch (e: Exception) {
-            _updateStatus.value = "Error: ${e.message}"
-            e.printStackTrace()
+            _nickStatus.value = NickChangeStatus(message = "Nick updated successfully", error = false)
+        }.onFailure { exception ->
+            _nickStatus.value = NickChangeStatus(message = exception.message ?: "Unknown error", error = true)
         }
+    }
+    
+    fun clearNickStatus() {
+        _nickStatus.value = null
     }
 }
