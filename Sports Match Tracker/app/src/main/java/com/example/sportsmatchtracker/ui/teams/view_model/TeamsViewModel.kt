@@ -13,7 +13,6 @@ import com.example.sportsmatchtracker.model.match.MatchResult
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.model.subscriptions.LeagueSubscription
 import com.example.sportsmatchtracker.model.subscriptions.TeamSubscription
-import com.example.sportsmatchtracker.model.team.Team
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.repository.leagues.LeaguesRepository
 import com.example.sportsmatchtracker.repository.matches.MatchesRepository
@@ -43,8 +42,8 @@ class TeamsViewModel(
     private val _tabItems = MutableStateFlow<List<TabItem<Sport?>>>(emptyList())
     val tabItems: StateFlow<List<TabItem<Sport?>>> = _tabItems.asStateFlow()
 
-    private val _searchResults = MutableStateFlow<List<Team>>(emptyList())
-    val searchResults: StateFlow<List<Team>> = _searchResults.asStateFlow()
+    private val _searchResults = MutableStateFlow<List<League>>(emptyList())
+    val searchResults: StateFlow<List<League>> = _searchResults.asStateFlow()
 
     private val _isSearching = MutableStateFlow(false)
     val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
@@ -101,7 +100,7 @@ class TeamsViewModel(
             setTabItems()
             fetchSubscriptions()
             fetchLeagues()
-            _searchResults.value = _leagues.value.flatMap { it.teams }
+            _searchResults.value = _leagues.value
             isInitialized = true
         }
     }
@@ -231,12 +230,36 @@ class TeamsViewModel(
             try {
                 delay(300)
 
-                val allTeams = _leagues.value.flatMap { it.teams }
+                val allLeagues = _leagues.value
 
-                _searchResults.value = filterList(allTeams, query) { team ->
-                    team.name
+                if (query.isBlank()) {
+                    _searchResults.value = allLeagues
+                } else {
+                    _searchResults.value = allLeagues.mapNotNull { league ->
+                        // Check if league name matches
+                        val leagueMatches = league.name.contains(query, ignoreCase = true)
+                        
+                        if (leagueMatches) {
+                            // If league name matches, return entire league
+                            league
+                        } else {
+                            // Otherwise, filter teams
+                            val matchingTeams = league.teams.filter { team ->
+                                team.name.contains(query, ignoreCase = true)
+                            }
+                            
+                            if (matchingTeams.isNotEmpty()) {
+                                // Return league with only matching teams
+                                league.copy(teams = matchingTeams)
+                            } else {
+                                null
+                            }
+                        }
+                    }
                 }
 
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
                 println("Search error: ${e.message}")
                 _searchResults.value = emptyList()

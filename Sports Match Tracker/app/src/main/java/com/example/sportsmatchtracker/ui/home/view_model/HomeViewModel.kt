@@ -120,8 +120,10 @@ class HomeViewModel(
                 delay(300) // debounce
                 val allMatches = matches.value
                 _searchResults.value = filterList(allMatches, query) { match ->
-                    "${match.homeTeam} ${match.awayTeam}"
+                    "${match.homeTeam} ${match.awayTeam} ${match.league.name}"
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
                 println("Search error: ${e.message}")
                 _searchResults.value = emptyList()

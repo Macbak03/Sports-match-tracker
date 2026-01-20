@@ -34,34 +34,18 @@ fun TeamsScreen(
     val tabItems by viewModel.tabItems.collectAsState()
     var selectedSport by remember { mutableStateOf<Sport?>(null) }
     var selectedTeam by remember { mutableStateOf<Team?>(null) }
-    val teams by viewModel.searchResults.collectAsState(initial = emptyList())
+    val searchResults by viewModel.searchResults.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
 
-    val filteredLeagues = remember(leagues, teams, selectedSport, searchQuery) {
-        val teamNames = teams.map { it.name }.toSet()
-
-        leagues.mapNotNull { league ->
-            val matchingTeams = if (searchQuery.isBlank()) {
-                league.teams
-            } else {
-                league.teams.filter { it.name in teamNames }
-            }
-
-            if (selectedSport != null && league.sport != selectedSport) {
-                null
-            } else if (matchingTeams.isEmpty()) {
-                null
-            } else {
-                league.copy(teams = matchingTeams)
-            }
-        }
-    }
-
-    val filteredTeams = remember(leagues, selectedSport) {
-        if (selectedSport == null) {
+    val filteredLeagues = remember(leagues, searchResults, selectedSport, searchQuery) {
+        val leaguesToDisplay = if (searchQuery.isBlank()) {
             leagues
         } else {
-            leagues.filter { it.sport.name == selectedSport!!.name }
+            searchResults
+        }
+
+        leaguesToDisplay.filter { league ->
+            selectedSport == null || league.sport == selectedSport
         }
     }
 
