@@ -83,11 +83,60 @@ class TablesRepository: Repository() {
                         )
                     )
                 }
+
+                if (tableStandings.isEmpty()) {
+                    // Fetch all teams for the league if no table data
+                    val teams = fetchTeamsForLeague(league)
+                    teams.forEach { team ->
+                        tableStandings.add(
+                            TableStanding(
+                                team = team,
+                                draws = 0,
+                                losses = 0,
+                                wins = 0,
+                                matchesPlayed = 0,
+                                points = 0
+                            )
+                        )
+                    }
+                }
             }
             tableStandings
         } catch (e: Exception) {
             e.printStackTrace()
             throw e
         }
+    }
+
+    private suspend fun fetchTeamsForLeague(league: League): List<Team> {
+        val request = selectRequest(
+            table = DatabaseSchema.Teams.TABLE_NAME,
+            columns = listOf(
+                DatabaseSchema.Teams.NAME,
+                DatabaseSchema.Teams.CITY
+            ),
+            where = listOf(
+                WhereCondition(DatabaseSchema.Teams.LEAGUE_NAME, "=", league.name),
+                WhereCondition(DatabaseSchema.Teams.LEAGUE_COUNTRY, "=", league.country)
+            )
+        )
+        val response = socketManager.sendRequestWithResponse(request)
+            ?: throw Exception("No response from server")
+        
+        val teams = mutableListOf<Team>()
+        val jsonResponse = JSONObject(response)
+        if (jsonResponse.getString("status") == "success") {
+            val data = jsonResponse.getJSONArray("data")
+            for (i in 0 until jsonResponse.getInt("count")) {
+                val row = data.getJSONObject(i)
+                teams.add(
+                    Team(
+                        name = row.getString(DatabaseSchema.Teams.NAME),
+                        city = row.getString(DatabaseSchema.Teams.CITY)
+                    )
+                )
+            }
+        }
+        return teams
     }
 }
