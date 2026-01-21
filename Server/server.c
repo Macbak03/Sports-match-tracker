@@ -658,10 +658,12 @@ int connectToSQLite()
 void *socketThread(void *arg)
 {
     int sock = *((int *)arg);
+    free(arg); // Free the memory allocated in main
     printf("Client connected: socket %d\n", sock);
     if (sock >= 0)
     {
         char *connected = "connected\n";
+        printf("connected\n");
         send(sock, connected, strlen(connected), 0);
     }
     char buffer[8192];    // Zwiększony dla większych zapytań
@@ -695,13 +697,30 @@ int main()
 
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
+    /* Allow reusing the address/port immediately after restart */
+    int opt = 1;
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+    {
+        perror("setsockopt");
+        return 1;
+    }
+
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(1100);
     serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);
 
-    bind(serverSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
-    listen(serverSocket, 50);
+    if (bind(serverSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
+    {
+        perror("bind");
+        return 1;
+    }
+
+    if (listen(serverSocket, 50) < 0)
+    {
+        perror("listen");
+        return 1;
+    }
 
     signal(SIGINT, handle_sigint);
 
@@ -718,8 +737,11 @@ int main()
         if (newSocket < 0)
             break;
 
+        int *pclient = malloc(sizeof(int));
+        *pclient = newSocket;
+
         pthread_t tid;
-        pthread_create(&tid, NULL, socketThread, &newSocket);
+        pthread_create(&tid, NULL, socketThread, pclient);
         pthread_detach(tid);
     }
 

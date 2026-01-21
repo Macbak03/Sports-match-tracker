@@ -2,6 +2,8 @@ package com.example.sportsmatchtracker.network
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.json.JSONObject
@@ -12,6 +14,7 @@ class SocketManager private constructor() {
     private var socket: Socket? = null
     private var input: BufferedReader? = null
     private var output: PrintWriter? = null
+    private val mutex = Mutex()
     
     var isConnected: Boolean = false
         private set
@@ -27,17 +30,17 @@ class SocketManager private constructor() {
         }
     }
                                         //172.30.0.236    172.26.0.3
-    suspend fun connect(host: String = "172.26.0.3", port: Int = 1100): Boolean {
+    suspend fun connect(host: String = "192.168.1.6", port: Int = 1100): Boolean {
         return try {
-            withTimeout(3000) {
+            withTimeout(15000) {
                 withContext(Dispatchers.IO) {
                     try {
                         // Close existing socket if any
                         disconnect()
 
                         socket = Socket()
-                        socket?.soTimeout = 3000
-                        socket?.connect(java.net.InetSocketAddress(host, port), 3000)
+                        socket?.soTimeout = 15000
+                        socket?.connect(java.net.InetSocketAddress(host, port), 10000)
                         println("Socket connected")
 
                         input = BufferedReader(InputStreamReader(socket!!.getInputStream()))
@@ -78,16 +81,18 @@ class SocketManager private constructor() {
         }
 
         return withContext(Dispatchers.IO) {
-            try {
-                println("Sending request: $jsonRequest")
-                output?.println(jsonRequest.toString())
+            mutex.withLock {
+                try {
+                    println("Sending request: $jsonRequest")
+                    output?.println(jsonRequest.toString())
 
-                val response = input?.readLine()
-                println("Received response: $response")
-                response
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
+                    val response = input?.readLine()
+                    println("Received response: $response")
+                    response
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
             }
         }
     }
