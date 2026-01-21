@@ -13,9 +13,9 @@ import java.time.ZoneOffset
 data class Match(
     val homeTeam: String,
     val awayTeam: String,
-    val homeScore: Int,
-    val awayScore: Int,
-    val matchDateTime: Instant,
+    val homeScore: Int = 0,
+    val awayScore: Int = 0,
+    val matchDateTime: Instant = Instant.now(),
     val league: League,
     val events: List<MatchEvent> = listOf(),
     val matchStadium: String,

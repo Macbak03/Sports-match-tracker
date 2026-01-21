@@ -7,11 +7,15 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.sportsmatchtracker.App
+import com.example.sportsmatchtracker.model.league.League
 import com.example.sportsmatchtracker.model.match.Match
 import com.example.sportsmatchtracker.model.match.MatchEvent
 import com.example.sportsmatchtracker.model.sport.Sport
+import com.example.sportsmatchtracker.repository.auth.AuthRepository
+import com.example.sportsmatchtracker.repository.leagues.LeaguesRepository
 import com.example.sportsmatchtracker.ui.components.TabItem
 import com.example.sportsmatchtracker.repository.matches.MatchesRepository
+import com.example.sportsmatchtracker.repository.seasons.SeasonsRepository
 import com.example.sportsmatchtracker.ui.utils.filterList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,10 +24,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    private val matchesRepository: MatchesRepository
+    private val matchesRepository: MatchesRepository,
+    private val authRepository: AuthRepository,
+    private val leaguesRepository: LeaguesRepository,
+    private val seasonsRepository: SeasonsRepository
 ): ViewModel() {
 
     val matches: StateFlow<List<Match>> = matchesRepository.matchesState
+    val user = authRepository.userState
+    val availableLeagues = leaguesRepository.leaguesState
+    private val _addMatchBuildings = MutableStateFlow<List<String>>(emptyList())
+    val addMatchBuildings = _addMatchBuildings.asStateFlow()
 
     private val _sports = MutableStateFlow<List<Sport>>(emptyList())
     val sports: StateFlow<List<Sport>> = _sports.asStateFlow()
@@ -58,13 +69,17 @@ class HomeViewModel(
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val homeRepository = (this[APPLICATION_KEY] as App).matchesRepository
+                val app = (this[APPLICATION_KEY] as App)
                 HomeViewModel(
-                    matchesRepository = homeRepository
+                    matchesRepository = app.matchesRepository,
+                    authRepository = app.authRepository,
+                    leaguesRepository = app.leaguesRepository,
+                    seasonsRepository = app.seasonsRepository
                 )
             }
         }
     }
+
     fun initialize() {
         if (isInitialized) return
 
@@ -143,4 +158,40 @@ class HomeViewModel(
         _isSearching.value = false
     }
 
+    fun loadAddMatchData() {
+        viewModelScope.launch {
+            try {
+                leaguesRepository.fetchLeagues()
+                _addMatchBuildings.value = matchesRepository.fetchBuildings()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    suspend fun getSeasonForDate(league: com.example.sportsmatchtracker.model.league.League, date: java.time.LocalDate): com.example.sportsmatchtracker.model.table.Season? {
+        return try {
+            val seasons = seasonsRepository.fetchSeasonsForLeague(league)
+            seasons.find { it.dateStart <= date && it.dateEnd >= date }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+    
+    fun insertMatch(
+        match: Match,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                matchesRepository.insertMatch(match)
+                refresh()
+                onSuccess()
+            } catch (e: Exception) {
+                onError(e.message ?: "Unknown error")
+            }
+        }
+    }
 }

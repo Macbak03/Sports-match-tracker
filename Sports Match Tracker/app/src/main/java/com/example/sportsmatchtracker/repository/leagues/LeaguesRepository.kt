@@ -17,6 +17,25 @@ class LeaguesRepository : Repository() {
     private val _leaguesState = MutableStateFlow<List<League>>(listOf())
     val leaguesState: StateFlow<List<League>> = _leaguesState.asStateFlow()
 
+    private fun parseServerError(message: String): Exception {
+        return when {
+            message.contains(
+                "UNIQUE constraint failed: teams.name",
+                ignoreCase = true
+            ) -> {
+                Exception(
+                    "Team with this name already exists"
+                )
+            }
+
+            else -> {
+                Exception(
+                    "Unidentified error: $message"
+                )
+            }
+        }
+    }
+
     suspend fun fetchLeagues() = withConnectionCheck {
         val request = selectWithJoinRequest(
             table = DatabaseSchema.Leagues.TABLE_NAME,
@@ -210,6 +229,31 @@ class LeaguesRepository : Repository() {
         } catch (e: Exception) {
             e.printStackTrace()
             throw e
+        }
+    }
+
+    suspend fun insertTeam(team: Team, league: League) = withConnectionCheck {
+        val request = insertRequest(
+            table = DatabaseSchema.Teams.TABLE_NAME,
+            columns = listOf(
+                DatabaseSchema.Teams.NAME,
+                DatabaseSchema.Teams.CITY,
+                DatabaseSchema.Teams.LEAGUE_NAME,
+                DatabaseSchema.Teams.LEAGUE_COUNTRY
+            ),
+            values = listOf(
+                team.name,
+                team.city,
+                league.name,
+                league.country
+            )
+        )
+        val response = socketManager.sendRequestWithResponse(request)
+            ?: throw Exception("No response from server")
+        
+        val jsonResponse = JSONObject(response)
+        if (jsonResponse.getString("status") != "success") {
+            throw parseServerError(jsonResponse.optString("message"))
         }
     }
 }

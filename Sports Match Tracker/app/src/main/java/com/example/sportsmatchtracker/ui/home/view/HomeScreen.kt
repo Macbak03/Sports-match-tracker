@@ -26,6 +26,17 @@ import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.ui.components.MatchDetailsBottomSheet
 import com.example.sportsmatchtracker.ui.home.view_model.HomeViewModel
 import com.example.sportsmatchtracker.ui.theme.SportsMatchTrackerTheme
+import com.example.sportsmatchtracker.ui.components.AddMatchDialog
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.rememberCoroutineScope
+
+import java.time.ZoneId
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,9 +49,17 @@ fun HomeScreen(
 
     val matches by viewModel.searchResults.collectAsState(initial = emptyList())
     val tabItems by viewModel.tabItems.collectAsState()
+    val user by viewModel.user.collectAsState(initial = null)
+    
     var selectedSport by remember { mutableStateOf<Sport?>(null) }
     var selectedMatch by remember { mutableStateOf<Match?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
+    
+    // Add Match Dialog State
+    var showAddMatchDialog by remember { mutableStateOf(false) }
+    val leagues by viewModel.availableLeagues.collectAsState(initial = emptyList())
+    val buildings by viewModel.addMatchBuildings.collectAsState(initial = emptyList())
+    val scope = rememberCoroutineScope()
 
     val filteredMatches = remember(matches, selectedSport) {
         if (selectedSport == null) {
@@ -50,49 +69,101 @@ fun HomeScreen(
         }
     }
 
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = {
-            isRefreshing = true
-            viewModel.refresh()
-            isRefreshing = false
-        }
-    ) {
-        Column() {
-        if (tabItems.isNotEmpty()) {
-            TabSelector(
-                tabs = tabItems,
-                selectedTab = selectedSport ?: tabItems.first().value,
-                onTabSelected = { sport ->
-                    selectedSport = if (sport == tabItems.firstOrNull()?.value) {
-                        null
-                    } else {
-                        sport
+    Scaffold(
+        floatingActionButton = {
+            if (user?.role == "admin") {
+                FloatingActionButton(
+                    onClick = { 
+                        viewModel.loadAddMatchData()
+                        showAddMatchDialog = true 
                     }
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add Match")
                 }
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
-        }
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End
+    ) { paddingValues ->
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(all = 10.dp)
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                viewModel.refresh()
+                isRefreshing = false
+            }
         ) {
-            val grouped = filteredMatches.groupBy { it.league }
-
-            grouped.forEach { (league, leagueMatches) ->
-                item {
-                    LeagueMatchCard(
-                        leagueName = league.name,
-                        matches = leagueMatches,
-                        onMatchClick = { match -> selectedMatch = match },
-                        modifier = Modifier.fillParentMaxWidth()
+            Column() {
+                if (tabItems.isNotEmpty()) {
+                    TabSelector(
+                        tabs = tabItems,
+                        selectedTab = selectedSport ?: tabItems.first().value,
+                        onTabSelected = { sport ->
+                            selectedSport = if (sport == tabItems.firstOrNull()?.value) {
+                                null
+                            } else {
+                                sport
+                            }
+                        }
                     )
+                    Spacer(modifier = Modifier.padding(8.dp))
+                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(all = 10.dp)
+                ) {
+                    val grouped = filteredMatches.groupBy { it.league }
+
+                    grouped.forEach { (league, leagueMatches) ->
+                        item {
+                            LeagueMatchCard(
+                                leagueName = league.name,
+                                matches = leagueMatches,
+                                onMatchClick = { match -> selectedMatch = match },
+                                modifier = Modifier.fillParentMaxWidth()
+                            )
+                        }
+                    }
                 }
             }
         }
     }
+
+    if (showAddMatchDialog) {
+        AddMatchDialog(
+            onDismissRequest = { showAddMatchDialog = false },
+            onConfirmation = { home, away, date, league, building ->
+                scope.launch {
+                    val season = viewModel.getSeasonForDate(league, date.toLocalDate())
+                    if (season != null) {
+                        val match = Match(
+                            homeTeam = home,
+                            awayTeam = away,
+                            homeScore = 0,
+                            awayScore = 0,
+                            matchDateTime = date.atZone(ZoneId.of("Europe/Warsaw")).toInstant(),
+                            league = league,
+                            matchStadium = building,
+                            seasonStartDate = season.dateStart,
+                            seasonEndDate = season.dateEnd
+                        )
+                        viewModel.insertMatch(
+                            match = match,
+                            onSuccess = {
+                                showAddMatchDialog = false
+                            },
+                            onError = { /* Handle error */ }
+                        )
+                    } else {
+                        // Handle no season found
+                    }
+                }
+            },
+            availableLeagues = leagues,
+            availableBuildings = buildings
+        )
     }
 
     selectedMatch?.let { match ->
@@ -103,14 +174,5 @@ fun HomeScreen(
                viewModel.fetchMatchEvents(match)
             }
         )
-    }
-}
-
-@SuppressLint("ViewModelConstructorInComposable")
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun ConnectPreview() {
-    SportsMatchTrackerTheme {
-        HomeScreen(viewModel = HomeViewModel(MatchesRepository()))
     }
 }

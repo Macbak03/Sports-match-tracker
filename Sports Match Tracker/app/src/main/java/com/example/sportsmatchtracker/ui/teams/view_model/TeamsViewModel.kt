@@ -13,6 +13,7 @@ import com.example.sportsmatchtracker.model.match.MatchResult
 import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.model.subscriptions.LeagueSubscription
 import com.example.sportsmatchtracker.model.subscriptions.TeamSubscription
+import com.example.sportsmatchtracker.model.team.Team
 import com.example.sportsmatchtracker.repository.auth.AuthRepository
 import com.example.sportsmatchtracker.repository.leagues.LeaguesRepository
 import com.example.sportsmatchtracker.repository.matches.MatchesRepository
@@ -33,6 +34,7 @@ class TeamsViewModel(
     private val authRepository: AuthRepository,
     private val matchesRepository: MatchesRepository
 ) : ViewModel() {
+    val user = authRepository.userState
     private val _leagues = MutableStateFlow<List<League>>(emptyList())
     val leagues: StateFlow<List<League>> = _leagues.asStateFlow()
 
@@ -274,4 +276,18 @@ class TeamsViewModel(
         }
     }
 
+    fun addTeam(team: Team, league: League, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                leaguesRepository.insertTeam(
+                    team = team,
+                    league = league
+                )
+                refresh()
+                onSuccess()
+            } catch (e: Exception) {
+                onError(e.message ?: "Unknown error")
+            }
+        }
+    }
 }

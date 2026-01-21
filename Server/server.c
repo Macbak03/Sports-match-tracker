@@ -317,9 +317,27 @@ int executeInsert(cJSON *json, char *response)
             strcat(values_str, "'");
             strcat(values_str, val->valuestring);
             strcat(values_str, "'");
-            if (i < val_count - 1)
-                strcat(values_str, ", ");
         }
+        else if (cJSON_IsNumber(val))
+        {
+            char num_str[64];
+            if (val->valueint == val->valuedouble)
+            {
+                sprintf(num_str, "%d", val->valueint);
+            }
+            else
+            {
+                sprintf(num_str, "%f", val->valuedouble);
+            }
+            strcat(values_str, num_str);
+        }
+        else if (cJSON_IsNull(val))
+        {
+            strcat(values_str, "NULL");
+        }
+
+        if (i < val_count - 1)
+            strcat(values_str, ", ");
     }
 
     snprintf(sql, sizeof(sql), "INSERT INTO %s (%s) VALUES (%s)",
@@ -366,7 +384,7 @@ int executeUpdate(cJSON *json, char *response)
     /* Columns and Values */
     cJSON *columns = cJSON_GetObjectItem(json, "columns");
     cJSON *values = cJSON_GetObjectItem(json, "values");
-    
+
     if (!cJSON_IsArray(columns) || !cJSON_IsArray(values))
     {
         sprintf(response, "{\"status\":\"error\",\"message\":\"Missing columns or values array\"}");
@@ -375,7 +393,7 @@ int executeUpdate(cJSON *json, char *response)
 
     int col_count = cJSON_GetArraySize(columns);
     int val_count = cJSON_GetArraySize(values);
-    
+
     if (col_count != val_count)
     {
         sprintf(response, "{\"status\":\"error\",\"message\":\"Columns and values count mismatch\"}");
@@ -393,7 +411,7 @@ int executeUpdate(cJSON *json, char *response)
         {
             if (i > 0)
                 strcat(set_str, ", ");
-            
+
             char set_clause[256];
             sprintf(set_clause, "%s = '%s'", col->valuestring, val->valuestring);
             strcat(set_str, set_clause);

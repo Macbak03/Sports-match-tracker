@@ -372,4 +372,70 @@ class MatchesRepository : Repository() {
         }
     }
 
+    suspend fun fetchBuildings(): List<String> = withConnectionCheck {
+        val request = selectRequest(
+            table = DatabaseSchema.Buildings.TABLE_NAME,
+            columns = listOf(DatabaseSchema.Buildings.NAME)
+        )
+        val response = socketManager.sendRequestWithResponse(request)
+            ?: throw Exception("No response from server")
+        
+        val buildings = mutableListOf<String>()
+        val jsonResponse = JSONObject(response)
+        if (jsonResponse.getString("status") == "success") {
+            val data = jsonResponse.getJSONArray("data")
+            for (i in 0 until jsonResponse.getInt("count")) {
+                buildings.add(data.getJSONObject(i).getString(DatabaseSchema.Buildings.NAME))
+            }
+        }
+        buildings
+    }
+
+    suspend fun insertMatch(match: Match) = withConnectionCheck {
+        val startDateFormatted = match.matchDateTime.atZone(ZoneId.of("Europe/Warsaw")).format(CustomDateFormatter.DATE_TIME)
+        val seasonStartFormatted = match.seasonStartDate.format(CustomDateFormatter.DATE)
+        val seasonEndFormatted = match.seasonEndDate.format(CustomDateFormatter.DATE)
+
+        val request = insertRequest(
+            table = DatabaseSchema.Matches.TABLE_NAME,
+            columns = listOf(
+                DatabaseSchema.Matches.START_DATE,
+                DatabaseSchema.Matches.HOME_SCORE,
+                DatabaseSchema.Matches.AWAY_SCORE,
+                DatabaseSchema.Matches.SEASON_START_DATE,
+                DatabaseSchema.Matches.SEASON_END_DATE,
+                DatabaseSchema.Matches.SEASON_LEAGUE_NAME,
+                DatabaseSchema.Matches.SEASON_LEAGUE_COUNTRY,
+                DatabaseSchema.Matches.BUILDING_NAME,
+                DatabaseSchema.Matches.HOME_TEAM_NAME,
+                DatabaseSchema.Matches.AWAY_TEAM_NAME
+            ),
+            values = listOf(
+                startDateFormatted,
+                match.homeScore,
+                match.awayScore,
+                seasonStartFormatted,
+                seasonEndFormatted,
+                match.league.name,
+                match.league.country,
+                match.matchStadium,
+                match.homeTeam,
+                match.awayTeam
+            )
+        )
+
+        val response = socketManager.sendRequestWithResponse(request)
+            ?: throw Exception("No response from server")
+
+
+        val jsonResponse = JSONObject(response)
+        if (jsonResponse.getString("status") != "success") {
+            throw Exception(jsonResponse.optString("message"))
+        }
+        
+        // Refresh matches after insertion
+        // Ideally we should call initialize() or refresh() but that belongs to ViewModel.
+        // We can just emit new state if we want, but here we just return success.
+    }
+
 }

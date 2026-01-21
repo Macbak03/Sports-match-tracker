@@ -69,7 +69,7 @@ class AuthRepository : Repository() {
 
         val request = selectRequest(
             table.TABLE_NAME,
-            listOf(table.EMAIL, table.NICK),
+            listOf(table.EMAIL, table.NICK, table.ROLES_NAME),
             listOf(
                 WhereCondition(table.EMAIL, "=", email),
                 WhereCondition(table.PASSWORD, "=", password)
@@ -92,7 +92,8 @@ class AuthRepository : Repository() {
                     val userJson = data.getJSONObject(0)
                     val user = User(
                         nick = userJson.getString(table.NICK),
-                        email = userJson.getString(table.EMAIL)
+                        email = userJson.getString(table.EMAIL),
+                        role = userJson.getString(table.ROLES_NAME)
                     )
                     _userState.value = user
 

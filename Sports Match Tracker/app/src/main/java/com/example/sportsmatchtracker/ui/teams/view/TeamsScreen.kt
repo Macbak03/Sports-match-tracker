@@ -21,7 +21,14 @@ import com.example.sportsmatchtracker.model.sport.Sport
 import com.example.sportsmatchtracker.ui.components.LeagueTeamsCard
 import com.example.sportsmatchtracker.ui.components.TabSelector
 import com.example.sportsmatchtracker.ui.components.TeamDetailsBottomSheet
+import com.example.sportsmatchtracker.ui.components.AddTeamDialog
 import com.example.sportsmatchtracker.ui.teams.view_model.TeamsViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.Scaffold
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,11 +42,16 @@ fun TeamsScreen(
 
     val leagues by viewModel.leagues.collectAsState()
     val tabItems by viewModel.tabItems.collectAsState()
+    val user by viewModel.user.collectAsState(initial = null)
+
     var selectedSport by remember { mutableStateOf<Sport?>(null) }
     var selectedTeam by remember { mutableStateOf<Team?>(null) }
     val searchResults by viewModel.searchResults.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
+    
+    // Add Team Dialog State
+    var showAddTeamDialog by remember { mutableStateOf(false) }
 
     val filteredLeagues = remember(leagues, searchResults, selectedSport, searchQuery) {
         val leaguesToDisplay = if (searchQuery.isBlank()) {
@@ -53,58 +65,88 @@ fun TeamsScreen(
         }
     }
 
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = {
-            isRefreshing = true
-            viewModel.refresh()
-            isRefreshing = false
-        }
-    ) {
-        Column() {
-            if (tabItems.isNotEmpty()) {
-                TabSelector(
-                    tabs = tabItems,
-                    selectedTab = selectedSport ?: tabItems.first().value,
-                    onTabSelected = { sport ->
-                        selectedSport = if (sport == tabItems.firstOrNull()?.value) {
-                            null
-                        } else {
-                            sport
-                        }
+    Scaffold(
+        floatingActionButton = {
+            if (user?.role == "admin") {
+                FloatingActionButton(
+                    onClick = { 
+                        showAddTeamDialog = true 
                     }
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add Team")
+                }
             }
+        },
+        floatingActionButtonPosition = FabPosition.End
+    ) { paddingValues ->
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                viewModel.refresh()
+                isRefreshing = false
+            }
+        ) {
+            Column() {
+                if (tabItems.isNotEmpty()) {
+                    TabSelector(
+                        tabs = tabItems,
+                        selectedTab = selectedSport ?: tabItems.first().value,
+                        onTabSelected = { sport ->
+                            selectedSport = if (sport == tabItems.firstOrNull()?.value) {
+                                null
+                            } else {
+                                sport
+                            }
+                        }
+                    )
+                    Spacer(modifier = Modifier.padding(8.dp))
+                }
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(all = 10.dp)
-            ) {
-                filteredLeagues.forEach { league ->
-                    item {
-                        LeagueTeamsCard(
-                            league = league,
-                            onTeamClick = { team -> selectedTeam = team },
-                            onFavouriteLeagueClick = {
-                                if (league.isSubscribed)
-                                    viewModel.unsubscribeLeague(league.toSubscription())
-                                else
-                                    viewModel.subscribeLeague(league.toSubscription())
-                            },
-                            onFavouriteTeamClick = { team ->
-                                if (team.isSubscribed)
-                                    viewModel.unsubscribeTeam(team.toSubscription())
-                                else
-                                    viewModel.subscribeTeam(team.toSubscription())
-                            },
-                            modifier = Modifier.fillParentMaxWidth()
-                        )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(all = 10.dp)
+                ) {
+                    filteredLeagues.forEach { league ->
+                        item {
+                            LeagueTeamsCard(
+                                league = league,
+                                onTeamClick = { team -> selectedTeam = team },
+                                onFavouriteLeagueClick = {
+                                    if (league.isSubscribed)
+                                        viewModel.unsubscribeLeague(league.toSubscription())
+                                    else
+                                        viewModel.subscribeLeague(league.toSubscription())
+                                },
+                                onFavouriteTeamClick = { team ->
+                                    if (team.isSubscribed)
+                                        viewModel.unsubscribeTeam(team.toSubscription())
+                                    else
+                                        viewModel.subscribeTeam(team.toSubscription())
+                                },
+                                modifier = Modifier.fillParentMaxWidth()
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+
+    if (showAddTeamDialog) {
+        AddTeamDialog(
+            onDismissRequest = { showAddTeamDialog = false },
+            onConfirmation = { name, city, league, onError ->
+                viewModel.addTeam(
+                    team = Team(name = name, city = city),
+                    league = league,
+                    onSuccess = { showAddTeamDialog = false },
+                    onError = { error -> onError(error) }
+                )
+            },
+            availableLeagues = leagues
+        )
     }
 
     selectedTeam?.let { team ->

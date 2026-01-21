@@ -3,6 +3,7 @@ package com.example.sportsmatchtracker.ui.settings.view
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -138,11 +139,15 @@ fun SettingsScreen(
             // Sign out button
             TextButton(
                 onClick = { viewModel.logout() },
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Text(
                     text = "Sign out",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
