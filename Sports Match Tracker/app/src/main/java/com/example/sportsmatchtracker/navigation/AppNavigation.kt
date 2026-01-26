@@ -55,7 +55,7 @@ fun AppNavigation(
     var searchQuery by remember { mutableStateOf("") }
     var lastMainRoute by remember { mutableStateOf<String?>(Screen.Home.route) }
 
-    // Remember the last main route (not connection or auth)
+    // Remember the last main route
     LaunchedEffect(currentRoute) {
         if (currentRoute in mainRoutes) {
             lastMainRoute = currentRoute

@@ -71,37 +71,6 @@ fun TeamsListItem(
 
         }
 
-
-//        Column(
-//        ) {
-//            Text(
-//                text = "Next match",
-//                color = Color.LightGray,
-//                style = MaterialTheme.typography.bodyMedium
-//            )
-//            Text(
-//                text = nextTeamMatchDate ?: "No matches",
-//                color = if (team.nextMatchDateString == "NOW") Color.Red else Color.Black,
-//                style = MaterialTheme.typography.bodyMedium
-//            )
-//        }
-
-        //Spacer(modifier = Modifier.width(16.dp))
-
-//        Column(
-//        ) {
-//            Text(
-//                text = "Last 5",
-//                color = Color.LightGray,
-//                style = MaterialTheme.typography.bodyMedium
-//            )
-//            Text(
-//                text = "W W W W W",
-//                color = Color.Black,
-//                style = MaterialTheme.typography.bodyMedium
-//            )
-//        }
-
         IconButton(
             onClick = onFavouriteCLick ,
             modifier = Modifier.offset(x = 12.dp)

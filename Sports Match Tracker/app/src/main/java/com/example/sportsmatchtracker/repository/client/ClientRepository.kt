@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.update
 class ClientRepository : Repository(){
     private val _clientState = MutableStateFlow(Client())
     val clientState: StateFlow<Client> = _clientState.asStateFlow()
-    suspend fun connectToServer(): Boolean {
-        _clientState.update { it.copy(isLoading = true, connectionStatus = "Connecting...") }
+    suspend fun connectToServer(host: String = "192.168.1.13"): Boolean {
+        _clientState.update { it.copy(isLoading = true, connectionStatus = "Connecting to $host...") }
         
-        val connected = socketManager.connect()
+        val connected = socketManager.connect(host = host)
         
         _clientState.update {
             it.copy(

@@ -30,17 +30,17 @@ class SocketManager private constructor() {
         }
     }
                                         //172.30.0.236    172.26.0.3
-    suspend fun connect(host: String = "192.168.1.6", port: Int = 1100): Boolean {
+    suspend fun connect(host: String = "192.168.1.13", port: Int = 1100): Boolean {
         return try {
-            withTimeout(15000) {
+            withTimeout(5000) {
                 withContext(Dispatchers.IO) {
                     try {
                         // Close existing socket if any
                         disconnect()
 
                         socket = Socket()
-                        socket?.soTimeout = 15000
-                        socket?.connect(java.net.InetSocketAddress(host, port), 10000)
+                        socket?.soTimeout = 5000
+                        socket?.connect(java.net.InetSocketAddress(host, port), 5000)
                         println("Socket connected")
 
                         input = BufferedReader(InputStreamReader(socket!!.getInputStream()))

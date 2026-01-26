@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +27,7 @@ fun ConnectionScreen(
     viewModel: ConnectionViewModel
 ) {
     val clientState by viewModel.uiState.collectAsState()
+    val ipAddress by viewModel.ipAddress.collectAsState()
     
     Box(
         modifier = modifier.fillMaxSize(),
@@ -63,6 +65,13 @@ fun ConnectionScreen(
                         text = clientState.connectionStatus,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    OutlinedTextField(
+                        value = ipAddress,
+                        onValueChange = { viewModel.updateIpAddress(it) },
+                        label = { Text("Server IP Address") },
+                        singleLine = true
                     )
                     
                     Button(

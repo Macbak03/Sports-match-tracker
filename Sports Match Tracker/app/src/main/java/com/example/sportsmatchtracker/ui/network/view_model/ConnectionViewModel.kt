@@ -21,6 +21,9 @@ class ConnectionViewModel(
     private val _uiState = MutableStateFlow(Client())
     val uiState: StateFlow<Client> = _uiState.asStateFlow()
 
+    private val _ipAddress = MutableStateFlow("192.168.1.13")
+    val ipAddress: StateFlow<String> = _ipAddress.asStateFlow()
+
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
@@ -42,9 +45,13 @@ class ConnectionViewModel(
         connectToServer()
     }
 
+    fun updateIpAddress(newIp: String) {
+        _ipAddress.value = newIp
+    }
+
     fun connectToServer() {
         viewModelScope.launch {
-            clientRepository.connectToServer()
+            clientRepository.connectToServer(_ipAddress.value)
         }
     }
 }

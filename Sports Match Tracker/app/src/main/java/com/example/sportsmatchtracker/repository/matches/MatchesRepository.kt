@@ -432,10 +432,6 @@ class MatchesRepository : Repository() {
         if (jsonResponse.getString("status") != "success") {
             throw Exception(jsonResponse.optString("message"))
         }
-        
-        // Refresh matches after insertion
-        // Ideally we should call initialize() or refresh() but that belongs to ViewModel.
-        // We can just emit new state if we want, but here we just return success.
     }
 
 }

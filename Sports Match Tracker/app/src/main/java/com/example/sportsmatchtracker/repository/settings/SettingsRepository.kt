@@ -57,7 +57,6 @@ class SettingsRepository : Repository(){
             val status = jsonResponse.getString("status")
 
             if (status == "success") {
-                // Update local user state
                 _userState.value = _userState.value?.copy(nick = newNick)
             } else {
                 val errorMessage = jsonResponse.optString("message", "Unknown error")
