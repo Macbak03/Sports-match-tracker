@@ -21,7 +21,7 @@ class ConnectionViewModel(
     private val _uiState = MutableStateFlow(Client())
     val uiState: StateFlow<Client> = _uiState.asStateFlow()
 
-    private val _ipAddress = MutableStateFlow("192.168.1.13")
+    private val _ipAddress = MutableStateFlow("172.20.10.2")
     val ipAddress: StateFlow<String> = _ipAddress.asStateFlow()
 
     companion object {

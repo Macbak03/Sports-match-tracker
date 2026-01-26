@@ -310,6 +310,7 @@ int executeInsert(cJSON *json, char *response) {
             errMsg ? errMsg : sqlite3_errmsg(db));
     if (errMsg)
       sqlite3_free(errMsg);
+    pthread_mutex_unlock(&lock);
     return 1;
   }
 
@@ -572,15 +573,15 @@ int connectToSQLite() {
 /* ===================== SOCKET THREAD ===================== */
 void *socketThread(void *arg) {
   int sock = *((int *)arg);
-  free(arg); // Free the memory allocated in main
+  free(arg);
   printf("Client connected: socket %d\n", sock);
   if (sock >= 0) {
     char *connected = "connected\n";
     printf("connected\n");
     send(sock, connected, strlen(connected), 0);
   }
-  char buffer[8192];    // Zwiększony dla większych zapytań
-  char response[65536]; // Zwiększony dla większych odpowiedzi
+  char buffer[8192];
+  char response[65536];
 
   while (1) {
     int n = recv(sock, buffer, sizeof(buffer) - 1, 0);

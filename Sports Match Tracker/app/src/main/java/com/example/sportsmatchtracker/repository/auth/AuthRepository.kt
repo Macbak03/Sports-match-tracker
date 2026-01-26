@@ -138,8 +138,8 @@ class AuthRepository : Repository() {
 
         val request = insertRequest(
             table = table.TABLE_NAME,
-            columns = listOf(table.EMAIL, table.NICK, table.PASSWORD),
-            values = listOf(email, nick, password)
+            columns = listOf(table.EMAIL, table.NICK, table.PASSWORD, table.ROLES_NAME),
+            values = listOf(email, nick, password, "user")
         )
         val response = socketManager.sendRequestWithResponse(request) ?: throw AuthError(
             errorMessage = "No response from server",
