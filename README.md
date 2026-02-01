@@ -1,5 +1,11 @@
 # Sports Match Tracker
 
+## Autorzy
+Maciej Bąk 155228
+Kacper Mumot 159395
+
+## Opis
+
 Aplikacja mobilna umożliwiająca użytkownikom śledzenie wyników meczów z różnych dyscyplin sportowych, przeglądanie statystyk, tabel ligowych oraz zarządzanie własnymi subskrypcjami ulubionych drużyn, lig i meczów.
 Aplikacja łączy się z serwerem TCP, na którym obsługiwane są zapytania do bazy danych SQLite.
 
@@ -91,5 +97,6 @@ Serwer nasłuchuje na porcie **1100**.
 - `make` - kompiluje projekt
 - `make clean` - usuwa pliki obiektowe
 - `make init-db` - tworzy bazę danych
+
 
 
